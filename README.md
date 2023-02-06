@@ -1,5 +1,16 @@
 # PCM_sensitivity
 
+Plan:
+- Simulate trees with extant and extinct tips
+- Simulate trait evolution on those trees with different models
+- Subsample trees using different regimes: extant vs. extinct
+- Use PCMs to test whether trait evolution models are correctly identified
+- Use post-hoc tests to identify whether using tips with higher phylogenetic or functional uniqueness affect model fit
+
+To do:
+- Find and compare tree simulation packages, identify the best to fit our needs (W)
+
+
 ## Papers
 Slater et al. 2012 (Integrating fossils with molecular phylogenies improves inference of trait evolution)
 https://doi.org/10.1111/j.1558-5646.2012.01723.x
