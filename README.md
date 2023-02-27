@@ -31,8 +31,14 @@ https://doi.org/10.1093/sysbio/syaa055
 Bartoszek et al. 2022 (Model Selection Performance in Phylogenetic Comparative Methods Under Multivariate Ornstein–Uhlenbeck Models of Trait Evolution)
 https://academic.oup.com/sysbio/advance-article/doi/10.1093/sysbio/syac079/6962281
 
+Beaulieu and O'Meara 2022 (Fossils Do Not Substantially Improve, and May Even Harm, Estimates of Diversification Rate Heterogeneity)
+https://doi.org/10.1093/sysbio/syac049
+
 Wilson et al. 2022 (Chronogram or phylogram for ancestral state estimation? Model-fit statistics indicate the branch lengths underlying a binary character's evolution)
 https://doi.org/10.1111/2041-210X.13872
+
+Liow et al. 2023 (Cross-disciplinary information for understanding macroevolution)
+https://doi.org/10.1016/j.tree.2022.10.013
 
 Mynard et al. 2023 (Impact of Phylogenetic Tree Completeness and Misspecification of Sampling Fractions on Trait Dependent Diversification Models)
 https://academic.oup.com/sysbio/advance-article/doi/10.1093/sysbio/syad001/6988090
