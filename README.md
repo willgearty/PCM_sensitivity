@@ -8,7 +8,8 @@ Plan:
 - Use post-hoc tests to identify whether using tips with higher phylogenetic or functional uniqueness affect model fit
 
 To do:
-- Find and compare tree simulation packages, identify the best to fit our needs (W)
+- Simulate trees, varying the size of the phylogeny, the birth and death rates, the ratio of fossil to extant tips, and the temporal distribution of the fossils through time (W)
+- Draft code to simulate traits on phylogenies using BM, OU, trend and AC/DC (Early Burst) models (B)
 
 
 ## Papers
