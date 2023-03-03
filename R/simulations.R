@@ -26,7 +26,7 @@ get_props <- function(tree) {
 }
 
 # load in simulation functions
-source("sim.fossils.R")
+source("R/sim.fossils.R")
 
 trees <- sim.fbd.taxa.prop(100, .25, numbsim = 10, lambda = 1, mu = .25)
 # check that we get the correct proportions
