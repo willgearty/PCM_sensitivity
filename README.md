@@ -8,8 +8,9 @@ Plan:
 - Use post-hoc tests to identify whether using tips with higher phylogenetic or functional uniqueness affect model fit
 
 To do:
-- Simulate trees, varying the size of the phylogeny, the birth and death rates, the ratio of fossil to extant tips, and the temporal distribution of the fossils through time (W)
-- Draft code to simulate traits on phylogenies using BM, OU, trend and AC/DC (Early Burst) models (B)
+- Simulate trees (W) -> two sets of births/deaths to test for tree shape (births and deaths both 1, and births 1 and deaths 0.25) and vary proportions of extant/extinct tips
+- Model traits using mvMORPH (B) -> use parameter values from Slater et al. (2012), change the lowest value for Brownian motion from 0 to 0.1, try different values for theta for OU (the optimum value)
+- Put together code for model fitting (P)
 
 
 ## Papers
