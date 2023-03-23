@@ -1,3 +1,5 @@
+# Written by Will Gearty 2/10/2023
+
 library(TreeSim)
 library(FossilSim)
 library(geiger)

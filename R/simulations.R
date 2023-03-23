@@ -1,3 +1,5 @@
+# Written by Will Gearty 2/10/2023
+
 library(ape)
 library(phytools)
 library(paleotree)
