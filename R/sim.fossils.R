@@ -2,15 +2,25 @@ library(TreeSim)
 library(FossilSim)
 library(geiger)
 
-# this uses modified source code from FossilSim to pick the
-# correct proportion of fossils and the correct number of extant tips
-# the chance of sampling an extinct species is dependent its the branch length
-# non-uniform fossil sampling is imposed by rescaling the tree
-# options can be found in geiger::rescale
+# This uses modified source code from FossilSim to pick the
+# correct proportion of fossils and the correct number of extant tips.
+# The chance of sampling an extinct species is dependent on its branch length.
+# Non-uniform fossil sampling is imposed by temporarily rescaling the tree
+# (options can be found in geiger::rescale).
+# n: number of total taxa in the final tree
+# prop_extinct: proportion of the final taxa that are extinct
+# numbsim: number of simulations
+# lambda: birth/speciation rate
+# mu: death/extinction rate
+# complete: if TRUE, unsampled ancestors are included in the final tree
+#           (meaning it will have more than n tips)
+# model: a transformation model passed to geiger::rescale used only for fossil sampling
+#        (for temporal sampling biases/trends)
+# ...: other arguments passed to geiger::rescale (e.g., `a` for the EB `model`)
 sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
                               complete = FALSE, model = NULL, ...)
 {
-  trees <- TreeSim::sim.bd.taxa(n, numbsim, lambda, mu, frac = 1, complete = TRUE)
+  trees <- sim.bd.taxa(n, numbsim, lambda, mu, frac = 1, complete = TRUE)
 
   pb <- txtProgressBar(max = numbsim, style = 3)
   for(i in 1:length(trees))
@@ -41,6 +51,15 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
   return(trees)
 }
 
+# Sample fossil species across a phylogeny
+# The sampling process can be biased temporally by specifying a `model` that is
+# used to temporarily transform the tree using geiger::rescale.
+# Note that a given extinct species can only be sampled at most once.
+# n: number of fossil tips to sample
+# tree: non-ultrametric phylogeny
+# model: a transformation model passed to geiger::rescale used only for fossil sampling
+#        (for temporal sampling biases/trends)
+# ...: other arguments passed to geiger::rescale (e.g., `a` for the EB `model`)
 sim.fossils <- function(n, tree = NULL, model = NULL, ...) {
   # scale tree however the user wants
   scaled_tree <- tree
