@@ -1,4 +1,5 @@
 # Written by Will Gearty 2/10/2023
+# Simulate phylogenies with specified numbers of extinct and extant taxa
 
 library(ape)
 library(phytools)
