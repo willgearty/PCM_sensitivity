@@ -19,7 +19,7 @@ lambdas <- 1
 mus <- c(0.25, .9)
 n_sim <- 100
 
-pblapply(n_tips, function(n_tip) {
+tree_list <- lapply(n_tips, function(n_tip) {
   lapply(fossil_props, function(fossil_prop) {
     lapply(lambdas, function(lambda) {
       lapply(mus, function(mu) {
@@ -29,11 +29,13 @@ pblapply(n_tips, function(n_tip) {
           tree$fossil_prop <- fossil_prop
           tree$lambda <- lambda
           tree$mu <- mu
+          tree
         })
       })
     })
   })
 })
 
+saveRDS(tree_list, "./data/tree_simulations.RDS")
 
 # TODO: Simulate traits with different models
