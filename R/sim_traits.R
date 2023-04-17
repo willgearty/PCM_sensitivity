@@ -60,7 +60,7 @@ contMap(tree, sOUc_trait[,1])
 wOUs_trait <- mvSIM(tree = tree, nsim = 1, model = "OU1",
                     param = list(root = TRUE,
                                  alpha = 0.01, #strength of selection
-                                 theta = c(0, 0.5), #ancestral state,
+                                 theta = c(0, 1), #ancestral state,
                                                   #optimum
                                  sigma = 0.1 #strength of drift
                     ))
@@ -69,8 +69,8 @@ contMap(tree, wOUs_trait[,1])
 #Simulate strong OU ("SSP") trait evolution, with shifted optimum
 sOUs_trait <- mvSIM(tree = tree, nsim = 1, model = "OU1",
                     param = list(root = TRUE,
-                                 alpha = 1, #strength of selection
-                                 theta = c(0, 0.5), #ancestral state,
+                                 alpha = 10, #strength of selection
+                                 theta = c(0, 1), #ancestral state,
                                                   #optimum
                                  sigma = 0.1 #strength of drift
                     ))
