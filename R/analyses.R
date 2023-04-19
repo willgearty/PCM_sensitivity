@@ -12,13 +12,14 @@ library(pbapply)
 # Load functions
 source("R/sim.fossils.R")
 
-# Simulate trees of various sizes, etc
+# Settings -----------------------------------------------------------------
 n_tips <- c(50, 100, 200, 500, 1000)
 fossil_props <- c(0.05, 0.1, 0.25, 0.5, 0.95)
 lambdas <- 1
 mus <- c(0.25, .9)
 n_sim <- 100
 
+# Simulate trees -----------------------------------------------------------
 tree_list <- lapply(n_tips, function(n_tip) {
   lapply(fossil_props, function(fossil_prop) {
     lapply(lambdas, function(lambda) {
@@ -44,6 +45,10 @@ tree_list <- readRDS("./data/tree_simulations.RDS")
 
 traits <- tree_list
 
+pb <- txtProgressBar(max = length(n_tips) * length(fossil_props) * length(lambdas) *
+                       length(mus) * n_sim,
+                     style = 3)
+n <- 0
 for (i in 1:length(n_tips)) {
   for (j in 1:length(fossil_props)) {
     for (k in 1:length(lambdas)) {
@@ -150,6 +155,8 @@ for (i in 1:length(n_tips)) {
 
           #Replace tree with trait list
           traits[[i]][[j]][[k]][[l]][[m]] <- trait_list
+          setTxtProgressBar(pb, n)
+          n <- n + 1
         }
       }
     }
@@ -157,3 +164,28 @@ for (i in 1:length(n_tips)) {
 }
 
 saveRDS(traits, "./data/trait_simulations.RDS")
+
+# A hack to split the results into separate files
+mods <- c("wBM", "sBM", "wtrend", "strend",
+          "wOUc", "sOUc", "wOUs", "sOUs", "wAC",
+          "sAC", "wDC", "sDC")
+for (mod in mods) assign(mod, tree_list)
+
+for (mod in mods) {
+  for (i in 1:length(n_tips)) {
+    for (j in 1:length(fossil_props)) {
+      for (k in 1:length(lambdas)) {
+        for (l in 1:length(mus)) {
+          for (m in 1:n_sim) {
+              tmp <- get(mod)
+              tmp[[i]][[j]][[k]][[l]][[m]] <- traits[[i]][[j]][[k]][[l]][[m]][[mod]]
+              assign(mod, tmp)
+          }
+        }
+      }
+    }
+  }
+}
+
+for (mod in mods) saveRDS(get(mod), paste0("./data/", mod, ".RDS"))
+
