@@ -37,12 +37,6 @@ tree_list <- lapply(n_tips, function(n_tip) {
   })
 })
 
-saveRDS(tree_list, "./data/tree_simulations.RDS")
-
-# Simulate traits -------------------------------------------------------
-
-tree_list <- readRDS("./data/tree_simulations.RDS")
-
 ## getting rid of possible zero-length branches
 # by adding 0.00001 to zero-length branches
 
@@ -59,6 +53,14 @@ tree_list <- lapply(tree_list, function(ntip) {
     })
   })
 })
+
+
+saveRDS(tree_list, "./data/tree_simulations.RDS")
+
+# Simulate traits -------------------------------------------------------
+
+tree_list <- readRDS("./data/tree_simulations.RDS")
+
 
 traits <- tree_list
 
