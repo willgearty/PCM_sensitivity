@@ -216,24 +216,6 @@ for (mod in mods) saveRDS(get(mod), paste0("./data/", mod, ".RDS"))
 tree_list <- readRDS("./data/tree_simulations.RDS")
 
 
-## getting rid of possible zero-length branches
-# by adding 0.00001 to zero-length branches
-
-tree_list <- lapply(tree_list, function(ntip) {
-  lapply(ntip, function(fossil_props) {
-    lapply(fossil_props, function(lambdas) {
-      lapply(lambdas, function(mus) {
-        lapply(mus, function(tree) {
-          zero <- tree$edge.length == 0
-          tree$edge.length[zero] <- tree$edge.length[zero] + 0.00001
-          tree
-        })
-      })
-    })
-  })
-})
-
-
 # loading traits
 wBM_trait  <- readRDS("./data/wBM.RDS")
 sBM_trait  <- readRDS("./data/sBM.RDS")
