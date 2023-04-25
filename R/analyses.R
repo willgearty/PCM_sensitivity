@@ -43,6 +43,23 @@ saveRDS(tree_list, "./data/tree_simulations.RDS")
 
 tree_list <- readRDS("./data/tree_simulations.RDS")
 
+## getting rid of possible zero-length branches
+# by adding 0.00001 to zero-length branches
+
+tree_list <- lapply(tree_list, function(ntip) {
+  lapply(ntip, function(fossil_props) {
+    lapply(fossil_props, function(lambdas) {
+      lapply(lambdas, function(mus) {
+        lapply(mus, function(tree) {
+          zero <- tree$edge.length == 0
+          tree$edge.length[zero] <- tree$edge.length[zero] + 0.00001
+          tree
+        })
+      })
+    })
+  })
+})
+
 traits <- tree_list
 
 pb <- txtProgressBar(max = length(n_tips) * length(fossil_props) * length(lambdas) *
