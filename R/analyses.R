@@ -188,6 +188,8 @@ saveRDS(traits, "./data/trait_simulations.RDS")
 mods <- c("wBM", "sBM", "wtrend", "strend",
           "wOUc", "sOUc", "wOUs", "sOUs", "wAC",
           "sAC", "wDC", "sDC")
+
+
 for (mod in mods) assign(mod, tree_list)
 
 for (mod in mods) {
@@ -234,6 +236,17 @@ sAC_trait  <- readRDS("./data/sAC.RDS")
 
 wDC_trait  <- readRDS("./data/wDC.RDS")
 sDC_trait  <- readRDS("./data/sDC.RDS")
+
+
+# information needed for the loops:
+mods <- c("wBM", "sBM", "wtrend", "strend",
+          "wOUc", "sOUc", "wOUs", "sOUs", "wAC",
+          "sAC", "wDC", "sDC")
+n_tips <- c(50, 100, 200, 500, 1000)
+fossil_props <- c(0.05, 0.1, 0.25, 0.5, 0.95)
+lambdas <- 1
+mus <- c(0.25, .9)
+n_sim <- 100
 
 
 # create empty list to store all results
@@ -312,4 +325,6 @@ eval(parse(text = paste0("model_fitting_", mod, "[[", i, "]]",
 model_fitting_results[[mod]] <-  get(paste0("model_fitting_", mod))
 }
 
+# save all results in a single file (but we might want to separate by model?)
+saveRDS(model_fitting_results, "./data/model_fitting_results.RDS")
 
