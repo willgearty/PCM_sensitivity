@@ -6,8 +6,6 @@ setwd("C:\\Users\\frisk\\Dropbox\\Work in progress\\PCM_sensitivity\\PCM_sensiti
 # Load libraries
 library(ape)
 library(phytools)
-library(TreeSim)
-library(FossilSim)
 library(geiger)
 library(mvMORPH)
 library(pbapply)
@@ -23,23 +21,23 @@ tree_list <- readRDS("./data/tree_simulations.RDS")
 
 
 # loading traits
-wBM_trait  <- readRDS("./data/wBM.RDS")
-sBM_trait  <- readRDS("./data/sBM.RDS")
+wBM_trait  <- readRDS("./data/simulated_traits/wBM.RDS")
+sBM_trait  <- readRDS("./data/simulated_traits/sBM.RDS")
 
-wtrend_trait <- readRDS("./data/wtrend.RDS")
-strend_trait  <- readRDS("./data/strend.RDS")
+wtrend_trait <- readRDS("./data/simulated_traits/wtrend.RDS")
+strend_trait  <- readRDS("./data/simulated_traits/strend.RDS")
 
-wOUc_trait  <- readRDS("./data/wOUc.RDS")
-sOUc_trait  <- readRDS("./data/sOUc.RDS")
+wOUc_trait  <- readRDS("./data/simulated_traits/wOUc.RDS")
+sOUc_trait  <- readRDS("./data/simulated_traits/sOUc.RDS")
 
-wOUs_trait  <- readRDS("./data/wOUs.RDS")
-sOUs_trait  <- readRDS("./data/sOUs.RDS")
+wOUs_trait  <- readRDS("./data/simulated_traits/wOUs.RDS")
+sOUs_trait  <- readRDS("./data/simulated_traits/sOUs.RDS")
 
-wAC_trait  <- readRDS("./data/wAC.RDS")
-sAC_trait  <- readRDS("./data/sAC.RDS")
+wAC_trait  <- readRDS("./data/simulated_traits/wAC.RDS")
+sAC_trait  <- readRDS("./data/simulated_traits/sAC.RDS")
 
-wDC_trait  <- readRDS("./data/wDC.RDS")
-sDC_trait  <- readRDS("./data/sDC.RDS")
+wDC_trait  <- readRDS("./data/simulated_traits/wDC.RDS")
+sDC_trait  <- readRDS("./data/simulated_traits/sDC.RDS")
 
 
 # information needed for the loops:
@@ -52,16 +50,15 @@ lambdas <- 1
 mus <- c(0.25, .9)
 n_sim <- 100
 
-
-# create empty list to store all results
-model_fitting_results <- list()
-
+# for each of the trait evolution models used in the simulations
 for (mod in mods) {
 
-  # create lists that will be used in the loop
-  assign(paste0("model_fitting_",mod), tree_list)
+  # pull simulated trait values
   simulated_traits <- get(paste0(mod,"_trait"))
 
+  # create objects to store outputs
+  model_fitting_results <- tree_list
+  theta_estimates <- tree_list; sigma_estimates <- tree_list
 
   ## use mvMORPH to fit 6 models (for each of the 12 sets of data simulated with the 12 models)
 
@@ -70,57 +67,66 @@ for (mod in mods) {
       for (k in 1:length(lambdas)) {
         for (l in 1:length(mus)) {
           for (m in 1:n_sim) {
+
+            # for testing
+            # i <- 1; j <- 1; k <- 1; l <- 1; m <- 1
+
             tree <- tree_list[[i]][[j]][[k]][[l]][[m]]
             data <- simulated_traits[[i]][[j]][[k]][[l]][[m]]
 
-            #IF THERE ARE ISSUES TRY WITH: # set the model name
-            #mod <- paste0("n", n_tips[i], "_fp", fossil_props[j], "_l", lambdas[k], "_m", mus[l], "_s", m)
-
             # BM
-            assign(paste0("fit_", mod, "_BM"),
-                   mvBM(tree = tree, data = data,
-                        model = "BM1", method = "rpf"))
+            fit_BM <- mvBM(tree = tree, data = data,
+                        model = "BM1", method = "rpf",
+                        diagnostic = FALSE, echo = FALSE)
 
             # trend
-            assign(paste0("fit_", mod, "_trend"),
-                   mvBM(tree = tree, data = data,
+            fit_trend <- mvBM(tree = tree, data = data,
                         model = "BM1", method = "rpf",
-                        param = list(trend = TRUE)))
+                        param = list(trend = TRUE),
+                        diagnostic = FALSE, echo = FALSE)
 
             # OU 1 theta
-            assign(paste0("fit_", mod, "_OU1"),
-                   mvOU(tree = tree, data = data,
-                        model="OU1", param=list(root=FALSE)))
+            fit_OU1 <- mvOU(tree = tree, data = data,
+                        model="OU1", param=list(root=FALSE),
+                        diagnostic = FALSE, echo = FALSE)
 
             # OU 2 theta
-            assign(paste0("fit_", mod, "_OU2"),
-                   mvOU(tree = tree, data = data,
-                        model="OU1", param=list(root=TRUE)))
+            fit_OU2 <- mvOU(tree = tree, data = data,
+                        model="OU1", param=list(root=TRUE),
+                        diagnostic = FALSE, echo = FALSE)
 
             # AC
-            assign(paste0("fit_", mod, "_AC"),
-                   mvEB(tree = tree, data = data,
-                        param=list(up=1)))
+            fit_AC <- mvEB(tree = tree, data = data,
+                        param=list(up=1),
+                        diagnostic = FALSE, echo = FALSE)
 
             # DC
-            assign(paste0("fit_", mod, "_DC"),
-                   mvEB(tree = tree, data = data))
+            fit_DC <- mvEB(tree = tree, data = data,
+                           diagnostic = FALSE, echo = FALSE)
 
-            # create a list with the AIC values for the current dataset/model
-            obj_list <- list(AIC(get(paste0("fit_", mod, "_BM"))),
-                             AIC(get(paste0("fit_", mod, "_trend"))),
-                             AIC(get(paste0("fit_", mod, "_OU1"))),
-                             AIC(get(paste0("fit_", mod, "_OU2"))),
-                             AIC(get(paste0("fit_", mod, "_AC"))),
-                             AIC(get(paste0("fit_", mod, "_DC"))))
+
+            # create a list with the AIC values
+            AIC_list <- list(fit_BM$AIC, fit_trend$AIC, fit_OU1$AIC,
+                             fit_OU2$AIC, fit_AC$AIC, fit_DC$AIC)
+
+            # create a list with the theta values
+            theta_list <- list(fit_BM$theta, fit_trend$theta, fit_OU1$theta,
+                             fit_OU2$theta, fit_AC$theta, fit_DC$theta)
+
+            # create a list with the sigma values
+            sigma_list <- list(fit_BM$sigma, fit_trend$sigma, fit_OU1$sigma,
+                             fit_OU2$sigma, fit_AC$sigma, fit_DC$sigma)
+
 
             # assign names to the list elements
-            names(obj_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
+            names(AIC_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
+            names(theta_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
+            names(sigma_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
 
-            ##Replace tree with trait list and store the AIC values in the model_fitting_results object
-            eval(parse(text = paste0("model_fitting_", mod, "[[", i, "]]",
-                                     "[[", j, "]]", "[[", k, "]]",
-                                     "[[", l, "]]", "[[", m, "]] <- obj_list")))
+            ##Replace tree with AIC or estimated parameters
+            model_fitting_results[[i]][[j]][[k]][[l]][[m]] <- AIC_list
+            theta_estimates[[i]][[j]][[k]][[l]][[m]] <- theta_list
+            sigma_estimates[[i]][[j]][[k]][[l]][[m]] <- sigma_list
 
           }
         }
@@ -128,10 +134,11 @@ for (mod in mods) {
     }
   }
 
-  # add the list to the results list
-  model_fitting_results[[mod]] <-  get(paste0("model_fitting_", mod))
+  # save results in file named with input model
+  saveRDS(model_fitting_results,
+          paste0("./data/model_fitting/model_fitting_", mod, ".RDS"))
+  saveRDS(theta_estimates,
+          paste0("./data/model_fitting/theta_estimates_", mod, ".RDS"))
+  saveRDS(sigma_estimates,
+          paste0("./data/model_fitting/sigma_estimates_", mod, ".RDS"))
 }
-
-# save all results in a single file (but we might want to separate by model?)
-saveRDS(model_fitting_results, "./data/model_fitting_results.RDS")
-
