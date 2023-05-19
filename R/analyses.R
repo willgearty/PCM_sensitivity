@@ -182,7 +182,7 @@ for (i in 1:length(n_tips)) {
   }
 }
 
-saveRDS(traits, "./data/trait_simulations.RDS")
+saveRDS(traits, "./data/simulated_traits/trait_simulations.RDS")
 
 # A hack to split the results into separate files
 mods <- c("wBM", "sBM", "wtrend", "strend",
@@ -208,7 +208,8 @@ for (mod in mods) {
   }
 }
 
-for (mod in mods) saveRDS(get(mod), paste0("./data/", mod, ".RDS"))
+for (mod in mods) saveRDS(get(mod),
+                          paste0("./data/simulated_traits", mod, ".RDS"))
 
 
 # Model fitting -------------------------------------------------------
