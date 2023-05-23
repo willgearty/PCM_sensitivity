@@ -10,12 +10,7 @@ library(geiger)
 library(mvMORPH)
 library(pbapply)
 
-# Load functions
-source("R/sim.fossils.R")
-
 # Model fitting -------------------------------------------------------
-
-
 # loading trees
 tree_list <- readRDS("./data/tree_simulations.RDS")
 
@@ -50,9 +45,25 @@ lambdas <- 1
 mus <- c(0.25, .9)
 n_sim <- 100
 
-# for each of the trait evolution models used in the simulations
-for (mod in mods) {
+# tryCatch wrapper ------------------------------------------------
+tryMV <- function(expr) {
+  tryCatch(expr,
+           error = function(e) {
+             cat(paste0("Error: ", conditionMessage(e)), "\n")
+             cat(paste0("tree index: [[", i, "]][[", j, "]][[", k, "]][[", l, "]][[", m, "]]\n"))
+             cat(paste0("original model: ", mod, "\n"))
+             list(AIC = NA, AICc = NA, theta = NA, sigma = NA, error = e)
+           }
+  )
+}
 
+# for each of the trait evolution models used in the simulations
+pb <- txtProgressBar(max = length(mods) *length(n_tips) * length(fossil_props) *
+                       length(lambdas) * length(mus) * n_sim,
+                     style = 3)
+n <- 0
+
+for (mod in mods) {
   # pull simulated trait values
   simulated_traits <- get(paste0(mod,"_trait"))
 
@@ -61,7 +72,6 @@ for (mod in mods) {
   theta_estimates <- tree_list; sigma_estimates <- tree_list
 
   ## use mvMORPH to fit 6 models (for each of the 12 sets of data simulated with the 12 models)
-
   for (i in 1:length(n_tips)) {
     for (j in 1:length(fossil_props)) {
       for (k in 1:length(lambdas)) {
@@ -75,47 +85,47 @@ for (mod in mods) {
             data <- simulated_traits[[i]][[j]][[k]][[l]][[m]]
 
             # BM
-            fit_BM <- mvBM(tree = tree, data = data,
-                        model = "BM1", method = "rpf",
-                        diagnostic = FALSE, echo = FALSE)
+            fit_BM <- tryMV(mvBM(tree = tree, data = data,
+                                 model = "BM1", method = "rpf",
+                                 diagnostic = FALSE, echo = FALSE))
 
             # trend
-            fit_trend <- mvBM(tree = tree, data = data,
-                        model = "BM1", method = "rpf",
-                        param = list(trend = TRUE),
-                        diagnostic = FALSE, echo = FALSE)
+            fit_trend <- tryMV(mvBM(tree = tree, data = data,
+                                    model = "BM1", method = "rpf",
+                                    param = list(trend = TRUE),
+                                    diagnostic = FALSE, echo = FALSE))
 
             # OU 1 theta
-            fit_OU1 <- mvOU(tree = tree, data = data,
-                        model="OU1", param=list(root=FALSE),
-                        diagnostic = FALSE, echo = FALSE)
+            fit_OU1 <- tryMV(mvOU(tree = tree, data = data,
+                                  model="OU1", param=list(root=FALSE),
+                                  diagnostic = FALSE, echo = FALSE))
 
             # OU 2 theta
-            fit_OU2 <- mvOU(tree = tree, data = data,
-                        model="OU1", param=list(root=TRUE),
-                        diagnostic = FALSE, echo = FALSE)
+            fit_OU2 <- tryMV(mvOU(tree = tree, data = data,
+                                  model="OU1", param=list(root=TRUE),
+                                  diagnostic = FALSE, echo = FALSE))
 
             # AC
-            fit_AC <- mvEB(tree = tree, data = data,
-                        param=list(up=1),
-                        diagnostic = FALSE, echo = FALSE)
+            fit_AC <- tryMV(mvEB(tree = tree, data = data,
+                                 param=list(up=1),
+                                 diagnostic = FALSE, echo = FALSE))
 
             # DC
-            fit_DC <- mvEB(tree = tree, data = data,
-                           diagnostic = FALSE, echo = FALSE)
+            fit_DC <- tryMV(mvEB(tree = tree, data = data,
+                                 diagnostic = FALSE, echo = FALSE))
 
 
             # create a list with the AIC values
-            AIC_list <- list(fit_BM$AIC, fit_trend$AIC, fit_OU1$AIC,
-                             fit_OU2$AIC, fit_AC$AIC, fit_DC$AIC)
+            AIC_list <- list(fit_BM$AICc, fit_trend$AICc, fit_OU1$AICc,
+                             fit_OU2$AICc, fit_AC$AICc, fit_DC$AICc)
 
             # create a list with the theta values
             theta_list <- list(fit_BM$theta, fit_trend$theta, fit_OU1$theta,
-                             fit_OU2$theta, fit_AC$theta, fit_DC$theta)
+                               fit_OU2$theta, fit_AC$theta, fit_DC$theta)
 
             # create a list with the sigma values
             sigma_list <- list(fit_BM$sigma, fit_trend$sigma, fit_OU1$sigma,
-                             fit_OU2$sigma, fit_AC$sigma, fit_DC$sigma)
+                               fit_OU2$sigma, fit_AC$sigma, fit_DC$sigma)
 
 
             # assign names to the list elements
@@ -128,6 +138,8 @@ for (mod in mods) {
             theta_estimates[[i]][[j]][[k]][[l]][[m]] <- theta_list
             sigma_estimates[[i]][[j]][[k]][[l]][[m]] <- sigma_list
 
+            n <- n + 1
+            setTxtProgressBar(pb, n)
           }
         }
       }
@@ -142,3 +154,4 @@ for (mod in mods) {
   saveRDS(sigma_estimates,
           paste0("./data/model_fitting/sigma_estimates_", mod, ".RDS"))
 }
+close(pb)

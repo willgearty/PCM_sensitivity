@@ -174,13 +174,14 @@ for (i in 1:length(n_tips)) {
 
           #Replace tree with trait list
           traits[[i]][[j]][[k]][[l]][[m]] <- trait_list
-          setTxtProgressBar(pb, n)
           n <- n + 1
+          setTxtProgressBar(pb, n)
         }
       }
     }
   }
 }
+close(pb)
 
 saveRDS(traits, "./data/simulated_traits/trait_simulations.RDS")
 
@@ -198,9 +199,9 @@ for (mod in mods) {
       for (k in 1:length(lambdas)) {
         for (l in 1:length(mus)) {
           for (m in 1:n_sim) {
-              tmp <- get(mod)
-              tmp[[i]][[j]][[k]][[l]][[m]] <- traits[[i]][[j]][[k]][[l]][[m]][[mod]]
-              assign(mod, tmp)
+            tmp <- get(mod)
+            tmp[[i]][[j]][[k]][[l]][[m]] <- traits[[i]][[j]][[k]][[l]][[m]][[mod]]
+            assign(mod, tmp)
           }
         }
       }
@@ -255,75 +256,75 @@ model_fitting_results <- list()
 
 for (mod in mods) {
 
-# create lists that will be used in the loop
-assign(paste0("model_fitting_",mod), tree_list)
-simulated_traits <- get(paste0(mod,"_trait"))
+  # create lists that will be used in the loop
+  assign(paste0("model_fitting_",mod), tree_list)
+  simulated_traits <- get(paste0(mod,"_trait"))
 
 
-## use mvMORPH to fit 6 models (for each of the 12 sets of data simulated with the 12 models)
+  ## use mvMORPH to fit 6 models (for each of the 12 sets of data simulated with the 12 models)
 
-for (i in 1:length(n_tips)) {
-  for (j in 1:length(fossil_props)) {
-     for (k in 1:length(lambdas)) {
-       for (l in 1:length(mus)) {
-         for (m in 1:n_sim) {
-          tree <- tree_list[[i]][[j]][[k]][[l]][[m]]
-          data <- simulated_traits[[i]][[j]][[k]][[l]][[m]]
+  for (i in 1:length(n_tips)) {
+    for (j in 1:length(fossil_props)) {
+      for (k in 1:length(lambdas)) {
+        for (l in 1:length(mus)) {
+          for (m in 1:n_sim) {
+            tree <- tree_list[[i]][[j]][[k]][[l]][[m]]
+            data <- simulated_traits[[i]][[j]][[k]][[l]][[m]]
 
-          # BM
-          assign(paste0("fit_", mod, "_BM"),
-                 mvBM(tree = tree, data = data,
-                    model = "BM1", method = "rpf"))
+            # BM
+            assign(paste0("fit_", mod, "_BM"),
+                   mvBM(tree = tree, data = data,
+                        model = "BM1", method = "rpf", echo = FALSE))
 
-          # trend
-          assign(paste0("fit_", mod, "_trend"),
-                 mvBM(tree = tree, data = data,
-                    model = "BM1", method = "rpf",
-                    param = list(trend = TRUE)))
+            # trend
+            assign(paste0("fit_", mod, "_trend"),
+                   mvBM(tree = tree, data = data,
+                        model = "BM1", method = "rpf",
+                        param = list(trend = TRUE), echo = FALSE))
 
-          # OU 1 theta
-          assign(paste0("fit_", mod, "_OU1"),
-                 mvOU(tree = tree, data = data,
-                    model="OU1", param=list(root=FALSE)))
+            # OU 1 theta
+            assign(paste0("fit_", mod, "_OU1"),
+                   mvOU(tree = tree, data = data,
+                        model="OU1", param=list(root=FALSE), echo = FALSE))
 
-          # OU 2 theta
-          assign(paste0("fit_", mod, "_OU2"),
-                 mvOU(tree = tree, data = data,
-                    model="OU1", param=list(root=TRUE)))
+            # OU 2 theta
+            assign(paste0("fit_", mod, "_OU2"),
+                   mvOU(tree = tree, data = data,
+                        model="OU1", param=list(root=TRUE), echo = FALSE))
 
-          # AC
-          assign(paste0("fit_", mod, "_AC"),
-                 mvEB(tree = tree, data = data,
-                    param=list(up=1)))
+            # AC
+            assign(paste0("fit_", mod, "_AC"),
+                   mvEB(tree = tree, data = data,
+                        param=list(up=1), echo = FALSE))
 
-          # DC
-          assign(paste0("fit_", mod, "_DC"),
-                 mvEB(tree = tree, data = data))
+            # DC
+            assign(paste0("fit_", mod, "_DC"),
+                   mvEB(tree = tree, data = data, echo = FALSE))
 
-# create a list with the results for the current dataset/model
-obj_list <- list(get(paste0("fit_", mod, "_BM")),
-                 get(paste0("fit_", mod, "_trend")),
-                 get(paste0("fit_", mod, "_OU1")),
-                 get(paste0("fit_", mod, "_OU2")),
-                 get(paste0("fit_", mod, "_AC")),
-                 get(paste0("fit_", mod, "_DC")))
+            # create a list with the results for the current dataset/model
+            obj_list <- list(get(paste0("fit_", mod, "_BM")),
+                             get(paste0("fit_", mod, "_trend")),
+                             get(paste0("fit_", mod, "_OU1")),
+                             get(paste0("fit_", mod, "_OU2")),
+                             get(paste0("fit_", mod, "_AC")),
+                             get(paste0("fit_", mod, "_DC")))
 
-# assign names to the list elements
-names(obj_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
+            # assign names to the list elements
+            names(obj_list) <- c("BM", "trend", "OU1", "OU2", "AC", "DC")
 
-#Replace tree with trait list
-eval(parse(text = paste0("model_fitting_", mod, "[[", i, "]]",
-                           "[[", j, "]]", "[[", k, "]]",
-                           "[[", l, "]]", "[[", m, "]] <- obj_list")))
+            #Replace tree with trait list
+            eval(parse(text = paste0("model_fitting_", mod, "[[", i, "]]",
+                                     "[[", j, "]]", "[[", k, "]]",
+                                     "[[", l, "]]", "[[", m, "]] <- obj_list")))
 
+          }
         }
       }
     }
   }
-}
 
-# add the list to the results list
-model_fitting_results[[mod]] <-  get(paste0("model_fitting_", mod))
+  # add the list to the results list
+  model_fitting_results[[mod]] <-  get(paste0("model_fitting_", mod))
 }
 
 # save all results in a single file (but we might want to separate by model?)
