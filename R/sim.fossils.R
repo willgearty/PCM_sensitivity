@@ -20,11 +20,11 @@ library(geiger)
 #        (for temporal sampling biases/trends)
 # ...: other arguments passed to geiger::rescale (e.g., `a` for the EB `model`)
 sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
-                              complete = FALSE, model = NULL, ...)
+                              complete = FALSE, model = NULL, progress = TRUE, ...)
 {
   trees <- sim.bd.taxa(n, numbsim, lambda, mu, frac = 1, complete = TRUE)
 
-  pb <- txtProgressBar(max = numbsim, style = 3)
+  if (progress) pb <- txtProgressBar(max = numbsim, style = 3)
   for(i in 1:length(trees))
   {
     t <- trees[[i]]
@@ -46,9 +46,9 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
 
     trees[[i]] <- SAtree(trees[[i]], complete)
     trees[[i]]$tip.label <- paste("t", 1:Ntip(trees[[i]]), sep = "")
-    setTxtProgressBar(pb, i)
+    if (progress) setTxtProgressBar(pb, i)
   }
-  close(pb)
+  if (progress) close(pb)
   class(trees) <- c("multiPhylo", "list")
   return(trees)
 }
