@@ -72,7 +72,8 @@ sim.fossils <- function(n, tree = NULL, model = NULL, ...) {
   rescaled_taxonomy <- sim.taxonomy(scaled_tree, beta = 1)
   # sample species using the rescaled branch lengths
   sps <- sample.int(n = nrow(rescaled_taxonomy), size = n,
-                        prob = rescaled_taxonomy$start - rescaled_taxonomy$end)
+                        prob = sapply(rescaled_taxonomy$start - rescaled_taxonomy$end,
+                                      function(x) max(0.00001, x))) # each branch always has a small chance
   # sample the fossils from the sampled species
   fdf <- fossils()
   taxonomy <- sim.taxonomy(tree, beta = 1)
