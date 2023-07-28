@@ -21,18 +21,11 @@ source("R/sim.fossils.R")
 
 # Settings -----------------------------------------------------------------
 n_tips <- c(50, 100, 200, 500, 1000)
-fossil_props <- c(0, 0.05, 0.1, 0.25, 0.5, 0.95)
+fossil_props <- c(0, 0.1, 0.25, 0.5, 0.95)
 lambdas <- 1
-mus <- c(0.25, .9)
+mus <- c(0.25, 0.9)
 betas <- c(-3, 0, 3)
-n_sim <- 25
-
-n_tips <- c(50, 100)
-fossil_props <- c(0.05, 0.1, 0.25)
-lambdas <- 1
-mus <- c(0.25)
-betas <- c(-3, 0)
-n_sim <- 2
+n_sim <- 100
 
 # get all unique combinations of parameters
 settings <- expand.grid(n_tip = n_tips, fossil_prop = fossil_props,
