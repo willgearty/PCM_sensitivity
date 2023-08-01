@@ -56,6 +56,7 @@ tree_df$tree <- lapply(tree_df$tree, function(tree) {
   tree$edge.length[zero] <- tree$edge.length[zero] + 0.00001
   tree
 })
+saveRDS(tree_df, "./data/tree_simulations.RDS")
 
 # rescale trees to height of 1
 # not sure why, but geiger::rescale wasn't working here
@@ -190,8 +191,8 @@ sDC_trait <- pblapply(tree_df$tree, function(tree) {
 
 # Save trait simulation results
 mods <- c("wBM", "sBM", "wtrend", "strend",
-          "wOUc", "sOUc", "wOUs", "sOUs", "wAC",
-          "sAC", "wDC", "sDC")
+          "wOUc", "sOUc", "wOUs", "sOUs",
+          "wAC", "sAC", "wDC", "sDC")
 for (mod in mods) saveRDS(get(paste0(mod, "_trait")),
                           paste0("./data/simulated_traits/", mod, ".RDS"))
 
@@ -221,11 +222,11 @@ sDC_trait  <- readRDS("./data/simulated_traits/sDC.RDS")
 
 # information needed for the loop:
 mods <- c("wBM", "sBM", "wtrend", "strend",
-          "wOUc", "sOUc", "wOUs", "sOUs", "wAC",
-          "sAC", "wDC", "sDC")
+          "wOUc", "sOUc", "wOUs", "sOUs",
+          "wAC", "sAC", "wDC", "sDC")
 
 # for each of the trait evolution models used in the simulations
-for(mod in mods) {
+for (mod in mods) {
   print(paste("Fitting models to", mod, "simulations"))
   # pull simulated trait values
   simulated_traits <- get(paste0(mod,"_trait"))
