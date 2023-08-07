@@ -15,6 +15,7 @@ library(ggplot2)
 #devtools::install_github("willgearty/pcmtools")
 library(pcmtools)
 library(deeptime)
+library(future)
 
 # Load functions
 source("R/sim.fossils.R")
@@ -225,8 +226,10 @@ mods <- c("wBM", "sBM", "wtrend", "strend",
           "wOUc", "sOUc", "wOUs", "sOUs",
           "wAC", "sAC", "wDC", "sDC")
 
+plan(multisession)
 # for each of the trait evolution models used in the simulations
 for (mod in mods) {
+  if (mod == "wBM") next
   print(paste("Fitting models to", mod, "simulations"))
   # pull simulated trait values
   simulated_traits <- get(paste0(mod,"_trait"))
@@ -279,10 +282,11 @@ for (mod in mods) {
 
     list(BM = fit_BM, trend = fit_trend, OU1 = fit_OU1,
          OU2 = fit_OU2, ACDC = fit_ACDC)
-  })
+  }, cl = "future")
   saveRDS(model_fitting_results,
           paste0("./data/model_fitting/model_fitting_", mod, ".RDS"))
 }
+plan(sequential)
 
 # Analyze results ---------------------------------------------------
 model_results <- list()
