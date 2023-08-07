@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+
+data/tree_simulations.RDS
+data/tree_simulations_scaled.RDS

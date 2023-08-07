@@ -20,6 +20,13 @@ library(future)
 # Load functions
 source("R/sim.fossils.R")
 
+# Load trees if missing ----------------------------------------------------
+# Normal trees
+# https://1drv.ms/u/s!ArhYkoKadYP1gP91QcgXJtFRpCnYmA?e=hg8ylU
+
+# Scaled trees
+# https://1drv.ms/u/s!ArhYkoKadYP1gP92kMLrgsNOjzGKBQ?e=eK3eFQ
+
 # Settings -----------------------------------------------------------------
 n_tips <- c(50, 100, 200, 500, 1000)
 fossil_props <- c(0, 0.1, 0.25, 0.5, 0.95)
