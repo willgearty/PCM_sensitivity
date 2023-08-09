@@ -20,7 +20,7 @@ library(future)
 # Load functions
 source("R/sim.fossils.R")
 
-# Load trees if missing ----------------------------------------------------
+# Download trees if missing ----------------------------------------------------
 # Normal trees
 # https://1drv.ms/u/s!ArhYkoKadYP1gP91QcgXJtFRpCnYmA?e=hg8ylU
 
@@ -297,6 +297,9 @@ plan(sequential)
 
 # Analyze results ---------------------------------------------------
 model_results <- list()
+mods <- c("wBM", "sBM", "wtrend", "strend",
+          "wOUc", "sOUc", "wOUs", "sOUs",
+          "wAC", "sAC", "wDC", "sDC")
 for (mod in mods) {
   model_results[[mod]] <- readRDS(paste0("./data/model_fitting/model_fitting_", mod, ".RDS"))
 }
@@ -318,15 +321,15 @@ model_fits_df_long <- model_fits_df %>%
   ungroup() %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
-         across(c(n_tip, fossil_prop, lambda, mu, sim, aicc_w), ~ as.numeric(.x))) %>%
-  mutate(across(c(n_tip, fossil_prop, lambda, mu), ~ as.factor(.x)))
+         across(c(n_tip, fossil_prop, lambda, mu, beta, sim, aicc_w), ~ as.numeric(.x))) %>%
+  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x)))
 
 param_estimates_df <- lapply(model_results, \(mod) {
   lapply(mod, \(tree) {
     lapply(tree, \(fit_model) {
       thetas <- rep_len(fit_model$theta, 2)
       bind_cols(alpha = fit_model$alpha[[1]], exp_rate = fit_model$beta[[1]],
-                sigma = fit_model$sigma[[1]],
+                sigma = fit_model$sigma[[1]], trend = fit_model$trend[[1]],
                 theta_0 = thetas[1], theta_1 = thetas[2],
                 convergence = fit_model$convergence)
     }) %>% bind_rows(.id = "fit_model")
@@ -336,8 +339,8 @@ param_estimates_df <- lapply(model_results, \(mod) {
 param_estimates_df <- param_estimates_df %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
-         across(c(n_tip, fossil_prop, lambda, mu, sim), ~ as.numeric(.x))) %>%
-  mutate(across(c(n_tip, fossil_prop, lambda, mu), ~ as.factor(.x))) %>%
+         across(c(n_tip, fossil_prop, lambda, mu, beta, sim), ~ as.numeric(.x))) %>%
+  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x))) %>%
   mutate(correct_model = case_when(
     model %in% c("wBM", "sBM") ~ "BM",
     model %in% c("wtrend", "strend") ~ "trend",
@@ -346,8 +349,10 @@ param_estimates_df <- param_estimates_df %>%
     model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
   )) %>%
   filter(fit_model == correct_model) %>%
-  select(-correct_model)
+  select(-correct_model) %>%
+  mutate(rel_hl = (log(2) / alpha) / sapply(tree_df$tree, function(tree) max(nodeHeights(tree))))
 
+# need to do some pivoting to get the two different theta values for each simulation
 theta_estimates_df_long <- param_estimates_df %>%
   pivot_longer(cols = c(theta_0, theta_1), names_to = "theta", values_to = "theta_val",
                names_prefix = "theta_") %>%
@@ -358,10 +363,9 @@ theta_estimates_df_long <- param_estimates_df %>%
   ungroup()
 
 # clean up the old object
-remove(model_fits)
+remove(model_results)
 
-# make some plots!
-
+## AIC plot ------------------------------------------------------
 gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.25")) +
   geom_violin(aes(x = factor(fossil_prop), y = aicc_w, color = fit_model)) +
   scale_color_brewer(palette = "Dark2") +
@@ -369,6 +373,7 @@ gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.25")) +
   theme_bw(base_size = 20)
 ggsave("./figures/AIC.pdf", gg1, width = 40, height = 20)
 
+## best model plot ------------------------------------------------------
 model_fits_df_summ <- model_fits_df_long %>%
   mutate(correct_model = case_when(
     model %in% c("wBM", "sBM") ~ "BM",
@@ -377,86 +382,204 @@ model_fits_df_summ <- model_fits_df_long %>%
     model %in% c("wOUs", "sOUs") ~ "OU2",
     model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
   )) %>%
-  group_by(model, n_tip, fossil_prop, lambda, mu, sim) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
   summarise(correct = ifelse(all(is.na(aicc_w)), NA,
                              any(unique(correct_model) ==
                                    fit_model[which(aicc_w == max(aicc_w, na.rm = TRUE))])),
             .groups = "drop") %>%
-  group_by(model, n_tip, fossil_prop, lambda, mu) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
   summarise(prop_true = sum(correct)/n(), .groups = "drop")
 
-gg2 <- ggplot(model_fits_df_summ) +
+gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
-                linetype = mu, group = interaction(n_tip, mu))) +
+                linetype = beta, group = interaction(n_tip, beta))) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Prop. of Simulations with Correct Best Fit Model", limits = c(0, 1)) +
   scale_color_brewer("# of tips", palette = "Dark2") +
-  scale_linetype_discrete("Rel. Ext. Rate") +
+  scale_linetype_discrete("Fossil Sampling\nBias") +
   theme_bw(base_size = 20) +
   facet_wrap(~model)
-ggsave("./figures/Prop_Best.pdf", gg2, width = 16, height = 12)
+gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
+  geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
+                linetype = beta, group = interaction(n_tip, beta))) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations with Correct Best Fit Model", limits = c(0, 1)) +
+  scale_color_brewer("# of tips", palette = "Dark2") +
+  scale_linetype_discrete("Fossil Sampling\nBias") +
+  theme_bw(base_size = 20) +
+  facet_wrap(~model)
+gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Best.pdf", gg2, width = 16, height = 20)
 
-correct_sigmas <- data.frame(model = factor(mods, levels = mods),
-                             sigma = c(0.1, 0.5, rep(0.1, 6), rep(0.001, 4)))
-gg3a <- ggplot(param_estimates_df %>%
-                filter(! model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.25)) +
-  geom_hline(data = correct_sigmas %>%
-               filter(! model %in% c("wAC", "sAC", "wDC", "sDC")),
-             aes(yintercept = sigma)) +
-  geom_violin(aes(x = n_tip, y = sigma, fill = fossil_prop, color = fossil_prop)) +
+## sigma plot ------------------------------------------------------
+correct_sigmas <- data.frame(model = factor(c("wBM", "sBM"), levels = c("wBM", "sBM")),
+                             sigma = c(0.1, 0.5))
+
+gg3a <- ggplot(param_estimates_df %>% filter(model %in% c("wBM", "sBM"), mu == 0.25)) +
+  geom_hline(data = correct_sigmas, aes(yintercept = sigma), linewidth = 1.25) +
+  geom_violin(aes(x = beta, y = sigma, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Sigma") +
-  scale_x_discrete("Number of Tips") +
+  scale_x_discrete("Fossil Sampling Bias") +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_wrap(~model, nrow = 2) +
+  facet_grid(rows = vars(model), cols = vars(n_tip)) +
   coord_cartesian(ylim = c(0, 1))
-gg3b <- ggplot(param_estimates_df %>%
-         filter(! model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.9)) +
-  geom_hline(data = correct_sigmas %>%
-               filter(! model %in% c("wAC", "sAC", "wDC", "sDC")),
-             aes(yintercept = sigma)) +
-  geom_violin(aes(x = n_tip, y = sigma, fill = fossil_prop, color = fossil_prop)) +
+gg3b <- ggplot(param_estimates_df %>% filter(model %in% c("wBM", "sBM"), mu == 0.9)) +
+  geom_hline(data = correct_sigmas, aes(yintercept = sigma), linewidth = 1.25) +
+  geom_violin(aes(x = beta, y = sigma, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Sigma") +
-  scale_x_discrete("Number of Tips") +
+  scale_x_discrete("Fossil Sampling Bias") +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_wrap(~model, nrow = 2) +
+  facet_grid(rows = vars(model), cols = vars(n_tip)) +
   coord_cartesian(ylim = c(0, 1))
 gg3 <- ggarrange2(gg3a, gg3b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
-ggsave("./figures/Sigmas.pdf", gg3, width = 22, height = 20)
+ggsave("./figures/Sigmas.pdf", gg3, width = 16, height = 12)
 
-correct_thetas <- data.frame(model_theta = c("wOUc_0", "sOUc_0", "wOUs_0", "sOUs_0", "wOUs_1", "sOUs_1"),
+## theta plot ------------------------------------------------------
+theta_estimates_df_long <- theta_estimates_df_long %>%
+  mutate(model_theta = factor(model_theta, levels = c("wOUc_0", "sOUc_0", "wOUs_0", "sOUs_0", "wOUs_1", "sOUs_1"))) %>%
+  complete(beta, fossil_prop, model_theta, n_tip, mu) %>%
+  mutate(transparent = ifelse(is.na(theta_val), "transparent", "black")) %>%
+  mutate(theta_val = ifelse(is.na(theta_val), 0, theta_val))
+theta_boxplot_stats <- theta_estimates_df_long %>%
+  group_by(beta, fossil_prop, model_theta, n_tip, mu) %>%
+  summarise(boxplot = list(setNames(boxplot.stats(theta_val)$stats,
+                                    c('lower_whisker','lower_hinge','median','upper_hinge','upper_whisker'))),
+            .groups = "drop") %>%
+  unnest_wider(boxplot) %>%
+  complete(beta, fossil_prop, model_theta, n_tip, mu)
+
+correct_thetas <- data.frame(model_theta = factor(c("wOUc_0", "sOUc_0", "wOUs_0", "sOUs_0", "wOUs_1", "sOUs_1"),
+                                                  levels = c("wOUc_0", "sOUc_0", "wOUs_0", "sOUs_0", "wOUs_1", "sOUs_1")),
                              theta_val = c(rep(0, 4), 1, 1))
 gg4a <- ggplot(theta_estimates_df_long %>% filter(mu == 0.25)) +
-  geom_hline(data = correct_thetas, aes(yintercept = theta_val)) +
-  geom_violin(aes(x = n_tip, y = theta_val, fill = fossil_prop, color = fossil_prop)) +
+  geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
+  geom_boxplot(aes(x = beta, y = theta_val, fill = fossil_prop, color = transparent),
+               position = position_dodge2(padding = .2, preserve = "single")) +
   scale_y_continuous("Estimated Theta") +
-  scale_x_discrete("Number of Tips") +
+  scale_x_discrete("Fossil Sampling Bias") +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
-  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_identity(NULL, ) +
   theme_bw(base_size = 20) +
-  facet_wrap(~model_theta, nrow = 2, scales = "free_y")
+  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y")
 gg4b <- ggplot(theta_estimates_df_long %>% filter(mu == 0.9)) +
-  geom_hline(data = correct_thetas, aes(yintercept = theta_val)) +
-  geom_violin(aes(x = n_tip, y = theta_val, fill = fossil_prop, color = fossil_prop)) +
+  geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
+  geom_boxplot(aes(x = beta, y = theta_val, fill = fossil_prop, color = transparent),
+               position = position_dodge2(padding = .2, preserve = "single")) +
   scale_y_continuous("Estimated Theta") +
-  scale_x_discrete("Number of Tips") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_identity(NULL, ) +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y")
+gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Thetas.pdf", gg4, width = 16, height = 20)
+
+## half-life plot ----------------------------------------------
+# half-lives relative to max tree height
+correct_rhls <- data.frame(model = factor(c("wOUc", "sOUc", "wOUs", "sOUs"),
+                                          levels = c("wOUc", "sOUc", "wOUs", "sOUs")),
+                           rel_hl = c(1, .1, 1, .1))
+
+gg5a <- ggplot(param_estimates_df %>%
+                 filter(model %in% c("wOUc", "wOUs", "sOUc", "sOUs"), mu == 0.25)) +
+  geom_hline(data = correct_rhls, aes(yintercept = rel_hl)) +
+  geom_violin(aes(x = beta, y = rel_hl, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Relative Phylogenetic Half-life") +
+  scale_x_discrete("Fossil Sampling Bias") +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_wrap(~model_theta, nrow = 2, scales = "free_y")
-gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
-ggsave("./figures/Thetas.pdf", gg4, width = 22, height = 20)
+  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y")
+gg5b <- ggplot(param_estimates_df %>%
+                 filter(model %in% c("wOUc", "sOUc", "wOUs", "sOUs"), mu == 0.9)) +
+  geom_hline(data = correct_rhls, aes(yintercept = rel_hl)) +
+  geom_violin(aes(x = beta, y = rel_hl, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Relative Phylogenetic Half-life") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y")
+gg5 <- ggarrange2(gg5a, gg5b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Halflives.pdf", gg5, width = 22, height = 20)
 
-# proportional tip heights of fossils
+## trend plot ----------------------------------------------
+correct_trends <- data.frame(model = factor(c("wtrend", "strend"), levels = c("wtrend", "strend")),
+                             trend = c(0.1, 0.3))
+
+gg6a <- ggplot(param_estimates_df %>% filter(model %in% c("wtrend", "strend"), mu == 0.25)) +
+  geom_hline(data = correct_trends, aes(yintercept = trend)) +
+  geom_violin(aes(x = beta, y = trend, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Estimated Trend") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  coord_cartesian(ylim = c(-0.1, 0.5))
+gg6b <- ggplot(param_estimates_df %>% filter(model %in% c("wtrend", "strend"), mu == 0.9)) +
+  geom_hline(data = correct_trends, aes(yintercept = trend)) +
+  geom_violin(aes(x = beta, y = trend, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Estimated Trend") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  coord_cartesian(ylim = c(-0.1, 0.5))
+gg6 <- ggarrange2(gg6a, gg6b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Trends.pdf", gg6, width = 16, height = 12)
+
+## beta plot -----------------------------------------------
+correct_betas <- data.frame(model = factor(c("wAC", "sAC", "wDC", "sDC"), levels = c("wAC", "sAC", "wDC", "sDC")),
+                            exp_rate = c(0.1, 0.3, -0.1, -0.3))
+
+gg7a <- ggplot(param_estimates_df %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.25)) +
+  geom_hline(data = correct_betas, aes(yintercept = exp_rate)) +
+  geom_violin(aes(x = beta, y = exp_rate, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Estimated Beta") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model), cols = vars(n_tip))
+gg7b <- ggplot(param_estimates_df %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.9)) +
+  geom_hline(data = correct_betas, aes(yintercept = exp_rate)) +
+  geom_violin(aes(x = beta, y = exp_rate, fill = fossil_prop, color = fossil_prop)) +
+  scale_y_continuous("Estimated Beta") +
+  scale_x_discrete("Fossil Sampling Bias") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(rows = vars(model), cols = vars(n_tip))
+gg7 <- ggarrange2(gg7a, gg7b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Betas.pdf", gg7, width = 16, height = 12)
+
+## heights of fossils --------------------------------------
 tree_df_scaled <- readRDS("./data/tree_simulations_scaled.RDS")
-fossil_heights <- function(tree_list) {
-  lapply(tree_list, function(tree) {
-    tree$edge.length <- tree$edge.length / max(nodeHeights(tree)[, 2])
-    n_heights <- nodeHeights(tree)[which(tree$edge <= Ntip(tree))]
-    n_heights[n_heights < (1 - 0.000001)] # because computer math
-  }) %>% do.call(c, .)
-}
-hist(fossil_heights(tree_df_scaled$tree))
+fossil_heights <- lapply(seq_along(tree_df_scaled$tree), FUN = function(i) {
+  tree <- tree_df_scaled$tree[[i]]
+  tree$edge.length <- tree$edge.length / max(nodeHeights(tree)[, 2])
+  n_heights <- nodeHeights(tree)[which(tree$edge <= Ntip(tree))]
+  tmp <- n_heights[n_heights < (1 - 0.000001)] # because computer math
+  if(length(tmp > 0)) {
+    cbind.data.frame(height = tmp, tree_df_scaled[i, 1:ncol(tree_df_scaled) - 1])
+  }
+}) %>%
+  do.call(rbind, .)
+
+gg5 <- ggplot(fossil_heights) +
+  geom_histogram(aes(x = height, fill = factor(mu)), position = "dodge",
+                 binwidth = 0.05, boundary = 1) +
+  scale_y_continuous("# of Fossils") +
+  scale_x_continuous("Relative Height in Phylogeny") +
+  scale_fill_discrete("mu") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(beta), rows = vars(n_tip), scales = "free_y") +
+  theme(legend.position = "top")
+ggsave("./figures/Fossil_heights.pdf", gg5, width = 12, height = 8)
+
