@@ -384,13 +384,18 @@ model_fits_df_summ <- model_fits_df_long %>%
   group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
   summarise(prop_true = sum(correct)/n(), .groups = "drop")
 
+model_fits_df_summ$beta <- as.character(model_fits_df_summ$beta)
+model_fits_df_summ$beta[which(model_fits_df_summ$beta == -3)] <- "young"
+model_fits_df_summ$beta[which(model_fits_df_summ$beta == 0)] <- "even"
+model_fits_df_summ$beta[which(model_fits_df_summ$beta == 3)] <- "old"
+
 gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
                 linetype = beta, group = interaction(n_tip, beta))) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Prop. of Simulations with Correct Best Fit Model", limits = c(0, 1)) +
   scale_color_brewer("# of tips", palette = "Dark2") +
-  scale_linetype_discrete("Fossil Sampling\nBias") +
+  scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
   facet_wrap(~model)
 gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
@@ -399,7 +404,7 @@ gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Prop. of Simulations with Correct Best Fit Model", limits = c(0, 1)) +
   scale_color_brewer("# of tips", palette = "Dark2") +
-  scale_linetype_discrete("Fossil Sampling\nBias") +
+  scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
   facet_wrap(~model)
 gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
