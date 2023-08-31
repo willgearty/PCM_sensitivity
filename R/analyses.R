@@ -296,6 +296,7 @@ for (mod in mods) {
 plan(sequential)
 
 # Analyze results ---------------------------------------------------
+# ('settings' must be created)
 model_results <- list()
 mods <- c("wBM", "sBM", "wtrend", "strend",
           "wOUc", "sOUc", "wOUs", "sOUs",
@@ -304,7 +305,10 @@ for (mod in mods) {
   model_results[[mod]] <- readRDS(paste0("./data/model_fitting/model_fitting_", mod, ".RDS"))
 }
 
-# extract  to data.frames
+# read in tree_df
+tree_df <- readRDS("./data/tree_simulations.RDS")
+
+# extract to data.frames
 model_fits_df <- lapply(model_results, \(mod) {
   lapply(mod, \(tree) {
     sapply(tree, \(fit_model) {
