@@ -5,7 +5,7 @@
 library(ape); library(phytools); library(geiger); library(TreeSim)
 library(FossilSim); library(mvMORPH); library(pbapply); library(dplyr)
 library(tibble); library(tidyr); library(ggplot2); library(pcmtools)
-library(deeptime); library(future)
+library(deeptime); library(future); library(forcats)
 
 # Load functions
 source("R/sim.fossils.R")
@@ -316,7 +316,8 @@ model_fits_df_long <- model_fits_df %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
          across(c(n_tip, fossil_prop, lambda, mu, beta, sim, aicc_w), ~ as.numeric(.x))) %>%
-  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x)))
+  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x))) %>%
+  mutate(beta = fct_recode(beta, old = "-3", even = "0", young = "3"))
 
 param_estimates_df <- lapply(model_results, \(mod) {
   lapply(mod, \(tree) {
@@ -344,7 +345,8 @@ param_estimates_df <- param_estimates_df %>%
   )) %>%
   filter(fit_model == correct_model) %>%
   select(-correct_model) %>%
-  mutate(rel_hl = (log(2) / alpha) / sapply(tree_df$tree, function(tree) max(nodeHeights(tree))))
+  mutate(rel_hl = (log(2) / alpha) / sapply(tree_df$tree, function(tree) max(nodeHeights(tree)))) %>%
+  mutate(beta = fct_recode(beta, old = "-3", even = "0", young = "3"))
 
 # need to do some pivoting to get the two different theta values for each simulation
 theta_estimates_df_long <- param_estimates_df %>%
@@ -367,7 +369,8 @@ gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.25")) +
   theme_bw(base_size = 20)
 ggsave("./figures/AIC.pdf", gg1, width = 40, height = 20)
 
-## best model plot ------------------------------------------------------
+## best model plots -----------------------------------------------------
+# proportion of best fitting models that are the correct model
 model_fits_df_summ <- model_fits_df_long %>%
   mutate(correct_model = case_when(
     model %in% c("wBM", "sBM") ~ "BM",
@@ -383,11 +386,6 @@ model_fits_df_summ <- model_fits_df_long %>%
             .groups = "drop") %>%
   group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
   summarise(prop_true = sum(correct)/n(), .groups = "drop")
-
-model_fits_df_summ$beta <- as.character(model_fits_df_summ$beta)
-model_fits_df_summ$beta[which(model_fits_df_summ$beta == -3)] <- "young"
-model_fits_df_summ$beta[which(model_fits_df_summ$beta == 0)] <- "even"
-model_fits_df_summ$beta[which(model_fits_df_summ$beta == 3)] <- "old"
 
 gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
@@ -409,6 +407,44 @@ gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   facet_wrap(~model)
 gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Best.pdf", gg2, width = 16, height = 20)
+
+# generating models for best fitting models
+model_fits_df_summ2 <- model_fits_df_long %>%
+  mutate(correct_model = case_when(
+    model %in% c("wBM", "sBM") ~ "BM",
+    model %in% c("wtrend", "strend") ~ "trend",
+    model %in% c("wOUc", "sOUc") ~ "OU1",
+    model %in% c("wOUs", "sOUs") ~ "OU2",
+    model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
+  )) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
+  slice_max(aicc_w) %>%
+  ungroup() %>%
+  group_by(n_tip, fossil_prop, lambda, mu, beta, fit_model) %>%
+  count(correct_model) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
+  geom_line(aes(x = fossil_prop, y = prop, color = correct_model,
+                linetype = beta, group = interaction(correct_model, beta))) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations", limits = c(0, 1)) +
+  scale_color_brewer("Simulated Model", palette = "Dark2") +
+  scale_linetype_discrete("Fossil Distribution") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(fit_model), rows = vars(n_tip))
+gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
+  geom_line(aes(x = fossil_prop, y = prop, color = correct_model,
+                linetype = beta, group = interaction(correct_model, beta))) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations", limits = c(0, 1)) +
+  scale_color_brewer("Simulated Model", palette = "Dark2") +
+  scale_linetype_discrete("Fossil Distribution") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(fit_model), rows = vars(n_tip))
+gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Sim.pdf", gg2_b, width = 16, height = 25)
 
 ## sigma plot ------------------------------------------------------
 correct_sigmas <- data.frame(model = factor(c("wBM", "sBM"), levels = c("wBM", "sBM")),
