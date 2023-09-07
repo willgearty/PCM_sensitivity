@@ -433,7 +433,8 @@ gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(fit_model), rows = vars(n_tip))
+  facet_grid(cols = vars(fit_model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   geom_line(aes(x = fossil_prop, y = prop, color = correct_model,
                 linetype = beta, group = interaction(correct_model, beta))) +
@@ -442,7 +443,8 @@ gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(fit_model), rows = vars(n_tip))
+  facet_grid(cols = vars(fit_model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Sim.pdf", gg2_b, width = 16, height = 25)
 
@@ -458,7 +460,8 @@ gg3a <- ggplot(param_estimates_df %>% filter(model %in% c("wBM", "sBM"), mu == 0
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(0, 1))
 gg3b <- ggplot(param_estimates_df %>% filter(model %in% c("wBM", "sBM"), mu == 0.9)) +
   geom_hline(data = correct_sigmas, aes(yintercept = sigma), linewidth = 1.25) +
@@ -468,7 +471,8 @@ gg3b <- ggplot(param_estimates_df %>% filter(model %in% c("wBM", "sBM"), mu == 0
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(0, 1))
 gg3 <- ggarrange2(gg3a, gg3b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Sigmas.pdf", gg3, width = 16, height = 12)
@@ -499,7 +503,8 @@ gg4a <- ggplot(theta_estimates_df_long %>% filter(mu == 0.25)) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_identity(NULL, ) +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y")
+  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg4b <- ggplot(theta_estimates_df_long %>% filter(mu == 0.9)) +
   geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
   geom_boxplot(aes(x = beta, y = theta_val, fill = fossil_prop, color = transparent),
@@ -509,7 +514,8 @@ gg4b <- ggplot(theta_estimates_df_long %>% filter(mu == 0.9)) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_identity(NULL, ) +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y")
+  facet_grid(rows = vars(model_theta), cols = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Thetas.pdf", gg4, width = 16, height = 20)
 
@@ -528,7 +534,8 @@ gg5a <- ggplot(param_estimates_df %>%
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y")
+  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg5b <- ggplot(param_estimates_df %>%
                  filter(model %in% c("wOUc", "sOUc", "wOUs", "sOUs"), mu == 0.9)) +
   geom_hline(data = correct_rhls, aes(yintercept = rel_hl)) +
@@ -538,7 +545,8 @@ gg5b <- ggplot(param_estimates_df %>%
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y")
+  facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg5 <- ggarrange2(gg5a, gg5b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Halflives.pdf", gg5, width = 22, height = 20)
 
@@ -554,7 +562,8 @@ gg6a <- ggplot(param_estimates_df %>% filter(model %in% c("wtrend", "strend"), m
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(-0.1, 0.5))
 gg6b <- ggplot(param_estimates_df %>% filter(model %in% c("wtrend", "strend"), mu == 0.9)) +
   geom_hline(data = correct_trends, aes(yintercept = trend)) +
@@ -564,7 +573,8 @@ gg6b <- ggplot(param_estimates_df %>% filter(model %in% c("wtrend", "strend"), m
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip)) +
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(-0.1, 0.5))
 gg6 <- ggarrange2(gg6a, gg6b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Trends.pdf", gg6, width = 16, height = 12)
@@ -581,7 +591,8 @@ gg7a <- ggplot(param_estimates_df %>% filter(model %in% c("wAC", "sAC", "wDC", "
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip))
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg7b <- ggplot(param_estimates_df %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.9)) +
   geom_hline(data = correct_betas, aes(yintercept = exp_rate)) +
   geom_violin(aes(x = beta, y = exp_rate, fill = fossil_prop, color = fossil_prop)) +
@@ -590,7 +601,8 @@ gg7b <- ggplot(param_estimates_df %>% filter(model %in% c("wAC", "sAC", "wDC", "
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(rows = vars(model), cols = vars(n_tip))
+  facet_grid(rows = vars(model), cols = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg7 <- ggarrange2(gg7a, gg7b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Betas.pdf", gg7, width = 16, height = 12)
 
@@ -605,7 +617,8 @@ fossil_heights <- lapply(seq_along(tree_df_scaled$tree), FUN = function(i) {
     cbind.data.frame(height = tmp, tree_df_scaled[i, 1:ncol(tree_df_scaled) - 1])
   }
 }) %>%
-  do.call(rbind, .)
+  do.call(rbind, .) %>%
+  mutate(beta = fct_recode(as.factor(beta), old = "-3", even = "0", young = "3"))
 
 gg5 <- ggplot(fossil_heights) +
   geom_histogram(aes(x = height, fill = factor(mu)), position = "dodge",
@@ -614,7 +627,8 @@ gg5 <- ggplot(fossil_heights) +
   scale_x_continuous("Relative Height in Phylogeny") +
   scale_fill_discrete("mu") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(beta), rows = vars(n_tip), scales = "free_y") +
+  facet_grid(cols = vars(beta), rows = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   theme(legend.position = "top")
 ggsave("./figures/Fossil_heights.pdf", gg5, width = 12, height = 8)
 
