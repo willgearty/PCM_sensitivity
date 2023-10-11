@@ -310,8 +310,8 @@ model_fits_df <- lapply(model_results, \(mod) {
 fit_models <- c("BM", "trend", "OU1", "OU2", "ACDC")
 model_fits_df_long <- model_fits_df %>%
   pivot_longer(cols = all_of(fit_models), names_to = "fit_model", values_to = "aicc") %>%
-  group_by(model, n_tip, fossil_prop, lambda, mu, sim) %>%
-  mutate(aicc_w = AICweights(aicc)) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
+  mutate(aicc_w = AICweights(aicc), aicc_d = aicc - min(aicc)) %>%
   ungroup() %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
@@ -447,6 +447,214 @@ gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Sim.pdf", gg2_b, width = 16, height = 25)
+
+# when wrong answer, what is it?
+model_fits_df_summ3 <- model_fits_df_long %>%
+  mutate(correct_model = case_when(
+    model %in% c("wBM", "sBM") ~ "BM",
+    model %in% c("wtrend", "strend") ~ "trend",
+    model %in% c("wOUc", "sOUc") ~ "OU1",
+    model %in% c("wOUs", "sOUs") ~ "OU2",
+    model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
+  )) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
+  mutate(correct = ifelse(all(is.na(aicc_w)), NA,
+                          any(unique(correct_model) ==
+                                fit_model[which(aicc_w == max(aicc_w, na.rm = TRUE))]))) %>%
+  filter(!correct) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
+  arrange(-aicc_w) %>%
+  slice(1) %>%
+  ungroup() %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
+  count(fit_model) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+gg2e <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
+  geom_col(data = . %>% filter(beta == "old"),
+           aes(x = as.numeric(fossil_prop) - .25, y = n, fill = fit_model, color = "blue"),
+           position = "stack", width = .2) +
+  geom_col(data = . %>% filter(beta == "even"),
+           aes(x = as.numeric(fossil_prop), y = n, fill = fit_model, color = "green"),
+           position = "stack", width = .2) +
+  geom_col(data = . %>% filter(beta == "young"),
+           aes(x = as.numeric(fossil_prop) + .25, y = n, fill = fit_model, color = "red"),
+           position = "stack", width = .2) +
+  scale_x_continuous("Proportion of Fossils in Tree", breaks = 1:5, labels = levels(model_fits_df_summ3$fossil_prop)) +
+  scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
+  scale_fill_brewer("Fit Model", palette = "Dark2") +
+  scale_color_identity("Fossil Distribution", guide = guide_legend(), labels = c("old", "even", "young")) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2f <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
+  geom_col(data = . %>% filter(beta == "old"),
+           aes(x = as.numeric(fossil_prop) - .25, y = n, fill = fit_model, color = "blue"),
+           position = "stack", width = .2) +
+  geom_col(data = . %>% filter(beta == "even"),
+           aes(x = as.numeric(fossil_prop), y = n, fill = fit_model, color = "green"),
+           position = "stack", width = .2) +
+  geom_col(data = . %>% filter(beta == "young"),
+           aes(x = as.numeric(fossil_prop) + .25, y = n, fill = fit_model, color = "red"),
+           position = "stack", width = .2) +
+  scale_x_continuous("Proportion of Fossils in Tree", breaks = 1:5, labels = levels(model_fits_df_summ3$fossil_prop)) +
+  scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
+  scale_fill_brewer("Fit Model", palette = "Dark2") +
+  scale_color_identity("Fossil Distribution", guide = guide_legend(), labels = c("old", "even", "young")) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2_c <- ggarrange2(gg2e, gg2f, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Wrong_Best.pdf", gg2_c, width = 40, height = 40)
+
+# summarize proportion of correct models
+gg2g <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
+  geom_col(aes(x = fossil_prop, y = prop_true / 12, fill = model)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations Correctly Identified",
+                     limits = c(0, 1)) +
+  scale_fill_brewer("Simulated Model", palette = "Paired") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2h <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
+  geom_col(aes(x = fossil_prop, y = prop_true / 12, fill = model)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations Correctly Identified",
+                     limits = c(0, 1)) +
+  scale_fill_brewer("Simulated Model", palette = "Paired") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2_d <- ggarrange2(gg2g, gg2h, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Best_Stacked.pdf", gg2_d, width = 18.53, height = 20)
+
+gg2i <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
+  geom_col(aes(x = fossil_prop, y = prop_true / 12)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations Correctly Identified",
+                     limits = c(0, 1)) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2j <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
+  geom_col(aes(x = fossil_prop, y = prop_true / 12)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Prop. of Simulations Correctly Identified",
+                     limits = c(0, 1)) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2_e <- ggarrange2(gg2i, gg2j, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Best_Combined.pdf", gg2_e, width = 16, height = 20)
+
+# proportions of simulations with clear best model
+model_fits_df_summ4 <- model_fits_df_long %>%
+  mutate(correct = case_when(
+    model %in% c("wBM", "sBM") ~ "BM",
+    model %in% c("wtrend", "strend") ~ "trend",
+    model %in% c("wOUc", "sOUc") ~ "OU1",
+    model %in% c("wOUs", "sOUs") ~ "OU2",
+    model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
+  ) == fit_model) %>%
+  mutate(best = ifelse(is.na(aicc_d), FALSE, aicc_d == 0)) %>%
+  group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
+  summarise(correct = ifelse(any(correct & best), "correct", "incorrect"),
+            clear = ifelse(all(aicc_d[!is.na(aicc_d) & !best] > 2), "clear", "unclear"),
+            .groups = "drop") %>%
+  mutate(cor_clear = factor(interaction(correct, clear, sep = " & "),
+                            levels = c("correct & clear", "correct & unclear",
+                                       "incorrect & clear", "incorrect & unclear")))
+
+gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
+  geom_bar(data = . %>% filter(beta == "old"),
+           aes(x = as.numeric(fossil_prop) - .25,
+               fill = cor_clear, color = "blue"),
+           position = "stack", width = .2) +
+  geom_bar(data = . %>% filter(beta == "even"),
+           aes(x = as.numeric(fossil_prop),
+               fill = cor_clear, color = "green"),
+           position = "stack", width = .2) +
+  geom_bar(data = . %>% filter(beta == "young"),
+           aes(x = as.numeric(fossil_prop) + .25,
+               fill = cor_clear, color = "red"),
+           position = "stack", width = .2) +
+  scale_x_continuous("Proportion of Fossils in Tree", breaks = 1:5, labels = levels(model_fits_df_summ3$fossil_prop)) +
+  scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
+  scale_fill_brewer("Fit Status", palette = "Dark2") +
+  scale_color_identity("Fossil Distribution", labels = c("old", "even", "young"),
+                       guide = guide_legend(direction = "horizontal",
+                                            title.position = "top",
+                                            label.position = "bottom",
+                                            label.hjust = 1, label.vjust = .5,
+                                            label.theme = element_text(angle = 90, size = 18),
+                                            keyheight = grid::unit(7, "lines"),
+                                            override.aes = list(linewidth = 1))) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
+  theme(legend.spacing.x = unit(.2, 'lines'))
+
+gg2l <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
+  geom_bar(data = . %>% filter(beta == "old"),
+           aes(x = as.numeric(fossil_prop) - .25,
+               fill = cor_clear, color = "blue"),
+           position = "stack", width = .2) +
+  geom_bar(data = . %>% filter(beta == "even"),
+           aes(x = as.numeric(fossil_prop),
+               fill = cor_clear, color = "green"),
+           position = "stack", width = .2) +
+  geom_bar(data = . %>% filter(beta == "young"),
+           aes(x = as.numeric(fossil_prop) + .25,
+               fill = cor_clear, color = "red"),
+           position = "stack", width = .2) +
+  scale_x_continuous("Proportion of Fossils in Tree", breaks = 1:5, labels = levels(model_fits_df_summ3$fossil_prop)) +
+  scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
+  scale_fill_brewer("Fit Status", palette = "Dark2") +
+  scale_color_identity("Fossil Distribution", labels = c("old", "even", "young"),
+                       guide = guide_legend(direction = "horizontal",
+                                            title.position = "top",
+                                            label.position = "bottom",
+                                            label.hjust = 1, label.vjust = .5,
+                                            label.theme = element_text(angle = 90, size = 18),
+                                            keyheight = grid::unit(7, "lines"),
+                                            override.aes = list(linewidth = 1))) +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(model), rows = vars(n_tip),
+             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
+  theme(legend.spacing.x = unit(.2, 'lines'))
+
+gg2_f <- ggarrange2(gg2k, gg2l, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Correct_Clear.pdf", gg2_f, width = 40, height = 40)
+
+# and the same but combined across simulated models
+gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 1200, fill = cor_clear)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
+  scale_fill_brewer("Fit Status", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 1200, fill = cor_clear)) +
+  scale_x_discrete("Proportion of Fossils in Tree") +
+  scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
+  scale_fill_brewer("Fit Status", palette = "Dark2") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(n_tip), rows = vars(beta),
+             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+
+gg2_g <- ggarrange2(gg2m, gg2n, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+ggsave("./figures/Prop_Correct_Clear_Combined.pdf", gg2_g, width = 18.53, height = 20)
 
 ## sigma plot ------------------------------------------------------
 correct_sigmas <- data.frame(model = factor(c("wBM", "sBM"), levels = c("wBM", "sBM")),
