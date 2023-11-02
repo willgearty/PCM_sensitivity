@@ -570,8 +570,8 @@ model_fits_df_summ4 <- model_fits_df_long %>%
             clear = ifelse(all(aicc_d[!is.na(aicc_d) & !best] > 2), "clear", "unclear"),
             .groups = "drop") %>%
   mutate(cor_clear = factor(interaction(correct, clear, sep = " & "),
-                            levels = c("correct & clear", "correct & unclear",
-                                       "incorrect & clear", "incorrect & unclear")))
+                            levels = c("incorrect & clear", "incorrect & unclear",
+                                       "correct & unclear", "correct & clear")))
 
 gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
   geom_bar(data = . %>% filter(beta == "old"),
