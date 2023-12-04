@@ -584,13 +584,13 @@ model_fits_df_summ4 <- model_fits_df_long %>%
   mutate(cor_clear = factor(interaction(correct, clear, sep = " & "),
                             levels = c("incorrect & clear", "incorrect & unclear",
                                        "correct & unclear", "correct & clear")),
-         model_summ = case_when(
+         model_summ = factor(case_when(
            model %in% c("wBM", "sBM") ~ "BM",
            model %in% c("wtrend", "strend") ~ "trend",
            model %in% c("wOUc", "sOUc") ~ "OU1",
            model %in% c("wOUs", "sOUs") ~ "OU2",
            model %in% c("wAC", "sAC", "wDC", "sDC") ~ "ACDC"
-         ))
+         ), levels = c("BM", "trend", "OU1", "OU2", "ACDC")))
 
 gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
   geom_bar(data = . %>% filter(beta == "old"),
