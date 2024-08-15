@@ -1,45 +1,42 @@
-# PCM_sensitivity
+This repository contains the required R code to produce all of the analyses and plots in:  
+‘The Impact of Tip Age Distribution on Reconstructing Trait Evolution Using Phylogenetic Comparative Methods’  
+William Gearty, Bethany J. Allen, Pedro L. Godoy, and Alfio Alessandro Chiarenza
 
-Plan:
-- Simulate trees with extant and extinct tips
-- Simulate trait evolution on those trees with different models
-- Subsample trees using different regimes: extant vs. extinct
-- Use PCMs to test whether trait evolution models are correctly identified
-- Use post-hoc tests to identify whether using tips with higher phylogenetic or functional uniqueness affect model fit
+## Before running the code
+Before running this R script, we suggest that you download this folder and set it as your R working directory. Plot files will be saved within the "/figures" folder. Note that many of the steps of the script can be skipped by loading the included simulation data within the "/data" folder.
 
-To do:
-- Simulate trees (W) -> two sets of births/deaths to test for tree shape (births and deaths both 1, and births 1 and deaths 0.25) and vary proportions of extant/extinct tips
-- Model traits using mvMORPH (B) -> use parameter values from Slater et al. (2012), change the lowest value for Brownian motion from 0 to 0.1, try different values for theta for OU (the optimum value)
-- Put together code for model fitting (P)
+## Running the code
+Run `R/analyses.R` to perform all analyses and produce all plots from the manuscript. Note that the analyses can take several days to run completely.
 
+## Required R packages
+The following packages can all be installed from CRAN:
 
-## Papers
-Slater et al. 2012 (Integrating fossils with molecular phylogenies improves inference of trait evolution)
-https://doi.org/10.1111/j.1558-5646.2012.01723.x
+ape  
+deeptime  
+dplyr  
+forcats  
+FossilSim  
+future  
+geiger  
+ggh4x  
+ggplot2  
+mvMORPH  
+pbapply  
+pcmtools  
+phytools  
+TreeSim  
+tibble  
+tidyr  
 
-Ho and Ane 2014 (Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models)
-https://besjournals.onlinelibrary.wiley.com/doi/10.1111/2041-210X.12285
+  
+The pcmtools package is currently only available on GitHub and will need to be installed from there to reproduce
+these analyses and plots. This can be achieved by running the following commands in your R console (ignore the first line 
+if you already have devtools installed).  
+```r
+install.packages("devtools")  
+devtools::install_github("willgearty/pcmtools")
+```
 
-Cooper et al. 2016 (A cautionary note on the use of Ornstein Uhlenbeck models in macroevolutionary studies)
-https://academic.oup.com/biolinnean/article/118/1/64/2440254
-
-Mongiardino Koch & Parry 2020 (Death is on Our Side: Paleontological Data Drastically Modify Phylogenetic Hypotheses)
-https://doi.org/10.1093/sysbio/syaa023
-
-Duchen et al. 2021 (On the Effect of Asymmetrical Trait Inheritance on Models of Trait Evolution)
-https://doi.org/10.1093/sysbio/syaa055
-
-Bartoszek et al. 2022 (Model Selection Performance in Phylogenetic Comparative Methods Under Multivariate Ornstein–Uhlenbeck Models of Trait Evolution)
-https://academic.oup.com/sysbio/advance-article/doi/10.1093/sysbio/syac079/6962281
-
-Beaulieu and O'Meara 2022 (Fossils Do Not Substantially Improve, and May Even Harm, Estimates of Diversification Rate Heterogeneity)
-https://doi.org/10.1093/sysbio/syac049
-
-Wilson et al. 2022 (Chronogram or phylogram for ancestral state estimation? Model-fit statistics indicate the branch lengths underlying a binary character's evolution)
-https://doi.org/10.1111/2041-210X.13872
-
-Liow et al. 2023 (Cross-disciplinary information for understanding macroevolution)
-https://doi.org/10.1016/j.tree.2022.10.013
-
-Mynard et al. 2023 (Impact of Phylogenetic Tree Completeness and Misspecification of Sampling Fractions on Trait Dependent Diversification Models)
-https://academic.oup.com/sysbio/advance-article/doi/10.1093/sysbio/syad001/6988090
+  
+All other packages can be installed from CRAN. These scripts have been tested using R version 4.4.0 - 
+Copyright (C) 2024 The R Foundation for Statistical Computing.

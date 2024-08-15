@@ -1,4 +1,4 @@
-# Written by Will Gearty, Bethany Allen, and Pedro Godoy
+# Written by Will Gearty, Bethany Allen, Pedro Godoy, and Alfio Alessandro Chiarenza
 
 # Load libraries
 #devtools::install_github("willgearty/pcmtools")
