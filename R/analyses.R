@@ -1081,27 +1081,35 @@ gg5 <- ggplot(fossil_heights) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
 ggsave("./figures/Fossil_heights.pdf", gg5, width = 12, height = 8)
 
-gg6 <- ggplot(fossil_heights %>% filter(mu == 0.25)) +
-  geom_histogram(aes(x = height, fill = factor(beta)), position = "dodge",
-                 binwidth = 0.05, boundary = 1) +
-  scale_y_continuous("# of Fossils") +
+fossil_heights_bins <- fossil_heights %>%
+  mutate(height_bin = cut(height, breaks = seq(0, 1, by = 0.05), include.lowest = TRUE)) %>%
+  group_by(mu, n_tip, fossil_prop, beta, height_bin) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(perc_foss = n / (n_tip * fossil_prop * 100) * 100,
+         height_bin_cont = as.numeric(height_bin) / 20 - 0.025)
+
+gg6 <- ggplot(fossil_heights_bins %>% filter(mu == 0.25)) +
+  geom_col(aes(x = height_bin_cont, y = perc_foss, fill = factor(beta)),
+           position = "dodge") +
   scale_x_continuous("Relative Height in Phylogeny") +
+  scale_y_continuous("% of Fossils in Phylogenies with Treatment") +
   scale_fill_brewer(NULL, palette = "Set1") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip), scales = "free",
+  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"),
                                  fossil_prop = function(x) {
                                    paste0(as.numeric(x) * 100, "% fossils")
                                  })) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
-gg7 <- ggplot(fossil_heights %>% filter(mu == 0.90)) +
-  geom_histogram(aes(x = height, fill = factor(beta)), position = "dodge",
-                 binwidth = 0.05, boundary = 1) +
-  scale_y_continuous("# of Fossils") +
+gg7 <- ggplot(fossil_heights_bins %>% filter(mu == 0.90)) +
+  geom_col(aes(x = height_bin_cont, y = perc_foss, fill = factor(beta)),
+           position = "dodge") +
   scale_x_continuous("Relative Height in Phylogeny") +
+  scale_y_continuous("% of Fossils in Phylogenies with Treatment") +
   scale_fill_brewer(NULL, palette = "Set1") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip), scales = "free",
+  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"),
                                  fossil_prop = function(x) {
                                    paste0(as.numeric(x) * 100, "% fossils")
