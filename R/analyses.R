@@ -365,8 +365,6 @@ theta_estimates_df_long <- param_estimates_df_clean %>%
 # clean up the old object
 remove(model_results)
 
-source("./R/theme_will.R")
-
 ## AIC plot ------------------------------------------------------
 gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.25")) +
   geom_violin(aes(x = factor(fossil_prop), y = aicc_w, color = fit_model)) +
@@ -401,7 +399,6 @@ gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   scale_color_brewer("# of tips", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_wrap(~model)
 gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
@@ -411,7 +408,6 @@ gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   scale_color_brewer("# of tips", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_wrap(~model)
 gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Best.pdf", gg2, width = 16, height = 20)
@@ -444,7 +440,6 @@ gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
@@ -455,7 +450,6 @@ gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -471,7 +465,6 @@ gg2c_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2d_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
@@ -482,7 +475,6 @@ gg2d_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   scale_color_brewer("Simulated Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2_b_n <- ggarrange2(gg2c_n, gg2d_n, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -528,7 +520,6 @@ gg2e <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
   scale_fill_brewer("Fit Model", palette = "Dark2") +
   scale_color_identity("Fossil Distribution", guide = guide_legend(), labels = c("root-biased", "random", "recent-biased")) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -547,7 +538,6 @@ gg2f <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
   scale_fill_brewer("Fit Model", palette = "Dark2") +
   scale_color_identity("Fossil Distribution", guide = guide_legend(), labels = c("root-biased", "random", "recent-biased")) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -562,7 +552,6 @@ gg2e2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2f2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
@@ -571,7 +560,6 @@ gg2f2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2_c2 <- ggarrange2(gg2e2, gg2f2, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -585,7 +573,6 @@ gg2e3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wBM", "
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2f3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wBM", "sBM", "wtrend", "strend"))) +
@@ -594,7 +581,6 @@ gg2f3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wBM", "s
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 ggsave("./figures/Wrong_Best_BM_25.pdf", gg2e3, width = 16, height = 20)
@@ -606,7 +592,6 @@ gg2e4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wOUc", 
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2f4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wOUc", "sOUc", "wOUs", "sOUs"))) +
@@ -615,7 +600,6 @@ gg2f4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wOUc", "
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 ggsave("./figures/Wrong_Best_OU_25.pdf", gg2e4, width = 16, height = 20)
@@ -627,7 +611,6 @@ gg2e5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wAC", "
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg2f5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wAC", "sAC", "wDC", "sDC"))) +
@@ -636,7 +619,6 @@ gg2f5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wAC", "s
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
   scale_fill_brewer("Best Fit Model", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 ggsave("./figures/Wrong_Best_ACDC_25.pdf", gg2e5, width = 16, height = 20)
@@ -650,7 +632,6 @@ ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
   scale_color_brewer("Fit Model", palette = "Dark2") +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(n_tip ~ model,
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 ggsave("./figures/test2.pdf", width = 40, height = 20)
@@ -663,7 +644,6 @@ gg2g <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
                      limits = c(0, 1)) +
   scale_fill_brewer("Simulated Model", palette = "Paired") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -674,7 +654,6 @@ gg2h <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
                      limits = c(0, 1)) +
   scale_fill_brewer("Simulated Model", palette = "Paired") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -689,7 +668,6 @@ gg2i <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   scale_y_continuous("Prop. of Simulations Correctly Identified",
                      limits = c(0, 1)) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -699,7 +677,6 @@ gg2j <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   scale_y_continuous("Prop. of Simulations Correctly Identified",
                      limits = c(0, 1)) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -762,7 +739,6 @@ gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
                                             keyheight = grid::unit(7, "lines"),
                                             override.aes = list(linewidth = 1))) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   theme(legend.spacing.x = unit(.2, 'lines'))
@@ -792,7 +768,6 @@ gg2l <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
                                             keyheight = grid::unit(7, "lines"),
                                             override.aes = list(linewidth = 1))) +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   theme(legend.spacing.x = unit(.2, 'lines'))
@@ -809,7 +784,6 @@ gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -819,7 +793,6 @@ gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -835,7 +808,6 @@ gg2o <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(beta), rows = vars(model),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -845,7 +817,6 @@ gg2p <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(beta), rows = vars(model),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
@@ -869,7 +840,6 @@ gg2q <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.25)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model_summ), rows = vars(beta))
 
 gg2r <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.9)) +
@@ -878,7 +848,6 @@ gg2r <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.9)) +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(model_summ), rows = vars(beta))
 
 gg2_i <- ggarrange2(gg2q, gg2r, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -898,7 +867,7 @@ gg3a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wBM", "sBM"), m
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(0, 1))
@@ -910,7 +879,7 @@ gg3b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wBM", "sBM"), m
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(0, 1))
@@ -964,7 +933,7 @@ gg4a <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.25)) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_nested(model + theta_text ~ n_tip, scales = "free_y",
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg4b <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.9)) +
@@ -978,7 +947,7 @@ gg4b <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.9)) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_nested(model + theta_text ~ n_tip, scales = "free_y",
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -1001,7 +970,7 @@ gg5a <- ggplot(param_estimates_df_clean %>%
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y",
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg5b <- ggplot(param_estimates_df_clean %>%
@@ -1013,7 +982,7 @@ gg5b <- ggplot(param_estimates_df_clean %>%
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y",
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg5 <- ggarrange2(gg5a, gg5b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -1033,7 +1002,7 @@ gg6a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "stren
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(-0.1, 0.5))
@@ -1045,7 +1014,7 @@ gg6b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "stren
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(-0.1, 0.5))
@@ -1066,7 +1035,7 @@ gg7a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "w
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg7b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.9)) +
@@ -1077,7 +1046,7 @@ gg7b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "w
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  theme_will(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg7 <- ggarrange2(gg7a, gg7b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
@@ -1106,7 +1075,6 @@ gg5 <- ggplot(fossil_heights) +
   scale_x_continuous("Relative Height in Phylogeny") +
   scale_fill_brewer("\u03BC", palette = "Set1") +
   theme_bw(base_size = 20) +
-  theme_will() +
   facet_grid(cols = vars(beta), rows = vars(n_tip), scales = "free_y",
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
