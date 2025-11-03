@@ -280,7 +280,7 @@ for (mod in mods) {
 
     list(BM = fit_BM, trend = fit_trend, OU1 = fit_OU1,
          OU2 = fit_OU2, ACDC = fit_ACDC)
-  }, cl = "future")
+  }, cl = "future", future.seed = TRUE)
   saveRDS(model_fitting_results,
           paste0("./data/model_fitting/model_fitting_", mod, ".RDS"))
 }
@@ -308,8 +308,14 @@ model_fits_df <- lapply(model_results, \(mod) {
 }) %>% bind_rows(.id = "model")
 colnames(model_fits_df)[10:11] <- c("OUc", "OUs")
 
+# remove the simulations that we don't want
+# (OUs and trend models without fossils)
+
+model_fits_df_filt <- model_fits_df %>%
+  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0))
+
 fit_models <- c("BM", "trend", "OUc", "OUs", "ACDC")
-model_fits_df_long <- model_fits_df %>%
+model_fits_df_long <- model_fits_df_filt %>%
   pivot_longer(cols = all_of(fit_models), names_to = "fit_model", values_to = "aicc") %>%
   group_by(model, n_tip, fossil_prop, lambda, mu, beta, sim) %>%
   mutate(aicc_w = AICweights(aicc), aicc_d = aicc - min(aicc)) %>%
@@ -335,7 +341,7 @@ param_estimates_df_clean <- param_estimates_df %>%
   mutate(fit_model = fct_recode(fit_model, OUc = "OU1", OUs = "OU2")) %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
-         across(c(n_tip, fossil_prop, lambda, mu, beta, sim), ~ as.numeric(.x))) %>%
+         across(c(n_tip, fossil_prop, lambda, mu, sim), ~ as.numeric(.x))) %>%
   mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x))) %>%
   mutate(correct_model = case_when(
     model %in% c("wBM", "sBM") ~ "BM",
@@ -347,7 +353,7 @@ param_estimates_df_clean <- param_estimates_df %>%
   filter(fit_model == correct_model) %>%
   select(-correct_model) %>%
   mutate(rel_hl = (log(2) / alpha) / sapply(tree_df$tree, function(tree) max(nodeHeights(tree)))) %>%
-  mutate(beta = fct_recode(beta, `root-biased` = "-3", random = "0", `recent-biased` = "3"))
+  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0))
 
 # need to do some pivoting to get the two different theta values for each simulation
 theta_estimates_df_long <- param_estimates_df_clean %>%
