@@ -22,29 +22,31 @@ n_tips <- c(50, 100, 200, 500, 1000)
 fossil_props <- c(0, 0.1, 0.25, 0.5, 0.95)
 lambdas <- 1
 mus <- c(0.25, 0.9)
-betas <- c(-3, 0, 3)
+models <- list("root" = function(x) 10 ^ -(x - 1) - 1,
+               "random" = function(x) 1,
+               "recent" = function(x) 100 ^ x - 1)
 n_sim <- 100
 
 # get all unique combinations of parameters
 settings <- expand.grid(n_tip = n_tips, fossil_prop = fossil_props,
-                        lambda = lambdas, mu = mus, beta = betas)
+                        lambda = lambdas, mu = mus, model = names(models))
 
 # Simulate trees -----------------------------------------------------------
 set.seed(1234)
-tree_df <- pbmapply(function(n_tip, fossil_prop, lambda, mu, beta) {
+tree_df <- pbmapply(function(n_tip, fossil_prop, lambda, mu, model) {
   trees <- sim.fbd.taxa.prop(n_tip, fossil_prop, numbsim = n_sim,
                              lambda = lambda, mu = mu,
-                             model = "EB", a = beta, progress = FALSE)
+                             model = models[[model]], progress = FALSE)
   tmp <- data.frame(n_tip = rep(n_tip, n_sim),
                     fossil_prop = rep(fossil_prop, n_sim),
                     lambda = rep(lambda, n_sim),
                     mu = rep(mu, n_sim),
-                    beta = rep(beta, n_sim),
+                    beta = model,
                     sim = seq_len(n_sim))
   tmp$tree <- trees
   tmp
 }, n_tip = settings$n_tip, fossil_prop = settings$fossil_prop,
-lambda = settings$lambda, mu = settings$mu, beta = settings$beta,
+lambda = settings$lambda, mu = settings$mu, model = settings$model,
 SIMPLIFY = FALSE) %>% do.call(rbind, .)
 
 ## getting rid of possible zero-length branches
@@ -123,7 +125,7 @@ sOUc_trait <- pblapply(tree_df$tree, function(tree) {
   max_height <- max(nodeHeights(tree))
   #Simulate strong OU ("SSP") trait evolution, centered on ancestral state ("SSP")
   mvSIM(tree = tree, nsim = 1, model = "OU1",
-        param = list(alpha = log(2) / (max_height / 10), #strength of selection
+        param = list(alpha = log(2) / (max_height / 5), #strength of selection
                      theta = 0, #ancestral state
                      sigma = 0.1 #strength of drift
         ))
@@ -145,7 +147,7 @@ sOUs_trait <- pblapply(tree_df$tree, function(tree) {
   #Simulate strong OU trait evolution, with shifted optimum
   mvSIM(tree = tree, nsim = 1, model = "OU1",
         param = list(root = TRUE,
-                     alpha = log(2) / (max_height / 10), #strength of selection
+                     alpha = log(2) / (max_height / 5), #strength of selection
                      theta = c(0, 1), #ancestral state, optimum
                      sigma = 0.1 #strength of drift
         ))
@@ -223,10 +225,9 @@ mods <- c("wBM", "sBM", "wtrend", "strend",
           "wOUc", "sOUc", "wOUs", "sOUs",
           "wAC", "sAC", "wDC", "sDC")
 
-plan(multisession)
+plan(multisession, workers = 8) # set up parallel processing
 # for each of the trait evolution models used in the simulations
 for (mod in mods) {
-  if (mod == "wBM") next
   print(paste("Fitting models to", mod, "simulations"))
   # pull simulated trait values
   simulated_traits <- get(paste0(mod,"_trait"))
@@ -274,8 +275,8 @@ for (mod in mods) {
 
     # ACDC
     fit_ACDC <- tryMV(mvEB(tree = tree, data = sim_trait,
-                         param=list(up=1),
-                         diagnostic = FALSE, echo = FALSE))
+                           param=list(up=1),
+                           diagnostic = FALSE, echo = FALSE))
 
     list(BM = fit_BM, trend = fit_trend, OU1 = fit_OU1,
          OU2 = fit_OU2, ACDC = fit_ACDC)
@@ -315,9 +316,8 @@ model_fits_df_long <- model_fits_df %>%
   ungroup() %>%
   mutate(model = factor(model, levels = mods),
          fit_model = factor(fit_model, levels = fit_models),
-         across(c(n_tip, fossil_prop, lambda, mu, beta, sim, aicc_w), ~ as.numeric(.x))) %>%
-  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x))) %>%
-  mutate(beta = fct_recode(beta, `root-biased` = "-3", random = "0", `recent-biased` = "3"))
+         across(c(n_tip, fossil_prop, lambda, mu, sim, aicc_w), ~ as.numeric(.x))) %>%
+  mutate(across(c(n_tip, fossil_prop, lambda, mu, beta), ~ as.factor(.x)))
 
 param_estimates_df <- lapply(model_results, \(mod) {
   lapply(mod, \(tree) {
@@ -984,7 +984,7 @@ ggsave("./figures/Thetas_90.pdf", gg4b, width = 16, height = 11, device = cairo_
 # half-lives relative to max tree height
 correct_rhls <- data.frame(model = factor(c("wOUc", "sOUc", "wOUs", "sOUs"),
                                           levels = c("wOUc", "sOUc", "wOUs", "sOUs")),
-                           rel_hl = c(1, .1, 1, .1))
+                           rel_hl = c(1, 1/5, 1, 1/5))
 
 gg5a <- ggplot(param_estimates_df_clean %>%
                  filter(model %in% c("wOUc", "wOUs", "sOUc", "sOUs"), mu == 0.25)) +
@@ -1091,10 +1091,10 @@ fossil_heights <- lapply(seq_along(tree_df_scaled$tree), FUN = function(i) {
   }
 }) %>%
   do.call(rbind, .) %>%
-  mutate(beta = fct_recode(as.factor(beta), `root-biased (a = -3)` = "-3", `random (a = 0)` = "0", `recent-biased (a = 3)` = "3"))
+  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
 gg5 <- ggplot(fossil_heights) +
-  geom_histogram(aes(x = height, fill = factor(mu)), position = "dodge",
+  geom_histogram(aes(x = height, fill = factor(beta)), position = "dodge",
                  binwidth = 0.05, boundary = 1) +
   scale_y_continuous("# of Fossils") +
   scale_x_continuous("Relative Height in Phylogeny") +
