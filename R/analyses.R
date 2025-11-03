@@ -1073,10 +1073,39 @@ gg5 <- ggplot(fossil_heights) +
                  binwidth = 0.05, boundary = 1) +
   scale_y_continuous("# of Fossils") +
   scale_x_continuous("Relative Height in Phylogeny") +
-  scale_fill_brewer("\u03BC", palette = "Set1") +
+  scale_fill_brewer(NULL, palette = "Set1") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(beta), rows = vars(n_tip), scales = "free_y",
-             labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
+  facet_grid(cols = vars(mu), rows = vars(n_tip), scales = "free_y",
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 mu = function(x) paste("\u03BC = ", x))) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
 ggsave("./figures/Fossil_heights.pdf", gg5, width = 12, height = 8)
 
+gg6 <- ggplot(fossil_heights %>% filter(mu == 0.25)) +
+  geom_histogram(aes(x = height, fill = factor(beta)), position = "dodge",
+                 binwidth = 0.05, boundary = 1) +
+  scale_y_continuous("# of Fossils") +
+  scale_x_continuous("Relative Height in Phylogeny") +
+  scale_fill_brewer(NULL, palette = "Set1") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip), scales = "free",
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 fossil_prop = function(x) {
+                                   paste0(as.numeric(x) * 100, "% fossils")
+                                 })) +
+  theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
+gg7 <- ggplot(fossil_heights %>% filter(mu == 0.90)) +
+  geom_histogram(aes(x = height, fill = factor(beta)), position = "dodge",
+                 binwidth = 0.05, boundary = 1) +
+  scale_y_continuous("# of Fossils") +
+  scale_x_continuous("Relative Height in Phylogeny") +
+  scale_fill_brewer(NULL, palette = "Set1") +
+  theme_bw(base_size = 20) +
+  facet_grid(cols = vars(fossil_prop), rows = vars(n_tip), scales = "free",
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 fossil_prop = function(x) {
+                                   paste0(as.numeric(x) * 100, "% fossils")
+                                 })) +
+  theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
+ggsave("./figures/Fossil_heights_25.pdf", gg6, width = 12, height = 12)
+ggsave("./figures/Fossil_heights_90.pdf", gg7, width = 12, height = 12)
