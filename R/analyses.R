@@ -779,7 +779,8 @@ ggsave("./figures/Prop_Correct_Clear_90.pdf", gg2l, width = 40, height = 20)
 
 # and the same but combined across simulated models
 gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
-  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 1200, fill = cor_clear)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
+           position = "fill") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
@@ -788,7 +789,8 @@ gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
 gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
-  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 1200, fill = cor_clear)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
+           position = "fill") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
@@ -803,7 +805,8 @@ ggsave("./figures/Prop_Correct_Clear_Combined_90.pdf", gg2n, width = 18.53, heig
 
 # same but split out by simulated model, not phylogeny size
 gg2o <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
-  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 500, fill = cor_clear)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
+           position = "fill") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
@@ -812,7 +815,8 @@ gg2o <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
 gg2p <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
-  geom_bar(aes(x = fossil_prop, y = after_stat(count) / 500, fill = cor_clear)) +
+  geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
+           position = "fill") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
