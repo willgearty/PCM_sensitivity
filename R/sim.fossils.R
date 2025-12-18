@@ -97,7 +97,7 @@ sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
     # until at least n extinct edges have fossils
     foss <- sim.fossils.poisson(50, tree, root.edge = FALSE)
     # filter to only those fossils on extinct branches (exclude extant tips and internal branches)
-    foss_sub <- subset(foss, edge <= Ntip(tree))
+    foss_sub <- subset(foss, edge %in% match(is.extinct(tree), tree$tip.label))
     if (length(unique(foss_sub$edge)) >= n) break
   }
   # based on the relative age of the fossils and the sampling "model",
@@ -114,6 +114,7 @@ sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
   # x is the branch ids
   # n is the number of desired extinct tips
   # prob is the recovery potentials
+  # note: sample() uses floor(n)
   sampled_branches <- sample(branch_recovery$edge, n,
                              prob = branch_recovery$recovery_potential)
   # return a fossil occurrence for each of those branches
