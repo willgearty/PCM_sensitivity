@@ -1123,3 +1123,139 @@ gg7 <- ggplot(fossil_heights_bins %>% filter(mu == 0.90)) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
 ggsave("./figures/Fossil_heights_25.pdf", gg6, width = 12, height = 12)
 ggsave("./figures/Fossil_heights_90.pdf", gg7, width = 12, height = 12)
+
+# plots for schematic ####
+# TODO: finish schematic components and combine them (and make it pretty)
+## intial full trees ####
+par(mfrow = c(5, 1), mar = c(0, 0, 0, 0))
+set.seed(1234)
+ex_trees <- sapply(n_tips, FUN = function(n) {
+  sim.bd.taxa(n, 1, 1, 0.9, frac = 1, complete = TRUE)[[1]]
+}, USE.NAMES = TRUE, simplify = FALSE)
+
+lapply(ex_trees, FUN = function(tree) {
+  plot.phylo(tree, show.tip.label = FALSE, no.margin = TRUE)
+})
+
+tree_50 <- ladderize(ex_trees[[1]], right = FALSE)
+tree_200 <- ladderize(ex_trees[[3]], right = FALSE)
+
+layout(1)
+plot.phylo(tree_50, show.tip.label = FALSE, no.margin = TRUE)
+dev.print(svg, filename = "./figures/Example_Full_Tree_50tips.svg", width = 8, height = 6)
+dev.print(png, filename = "./figures/Example_Full_Tree_50tips.png", width = 8, height = 6,
+          units = "in", res = 300)
+
+## generate some example fossils ####
+# an example for just showing fossils (otherwise there are too many)
+set.seed(1234)
+ex_foss_low <- sim.fossils.poisson(1, tree_50, root.edge = FALSE)
+
+layout(1)
+# do this instead of using FossilSim so we can remove the plot margins
+xx <- node.depth.edgelength(tree_50)
+yy <- node.height(tree_50)
+ex_foss_low$x <- max(xx) - ex_foss_low$hmax
+ex_foss_low$y <- yy[ex_foss_low$edge]
+
+plot.phylo(tree_50, show.tip.label = FALSE, no.margin = TRUE)
+points(ex_foss_low$x, ex_foss_low$y, col = "red", pch = 18, cex = 0.75)
+dev.print(svg, filename = "./figures/Example_Fossils_LowRate_50tips.svg", width = 8, height = 6)
+dev.print(png, filename = "./figures/Example_Fossils_LowRate_50tips.png", width = 8, height = 6,
+          units = "in", res = 300)
+
+# now examples with the real rate to generate recovery potentials
+set.seed(1234)
+ex_foss_high <- sim.fossils.poisson(50, tree_50, root.edge = FALSE)
+
+# calculate recovery potentials under different models
+foss_sub <- subset(ex_foss_high, edge <= Ntip(tree_50))
+ex_recov <- lapply(models, function(model) {
+  max_age <- max(FossilSim:::n.ages(tree_50))
+  foss_sub$rel_age <- (max_age - foss_sub$hmin) / max_age
+  foss_sub$recovery_potential <- model(foss_sub$rel_age)
+  # for each branch, sum the recovery potentials for all occurrences on that branch
+  branch_recovery <- foss_sub %>%
+    group_by(edge) %>%
+    summarise(recovery_potential = sum(recovery_potential, na.rm = TRUE)) %>%
+    ungroup()
+})
+
+par(mfrow = c(3, 1), mar = c(0, 0, 0, 0))
+for (i in 1:3) {
+  cols <- rep("black", nrow(tree_50$edge))
+  cols[match(ex_recov[[i]]$edge, tree_50$edge[, 2])] <- viridisLite::magma(1000)[cut(log10(ex_recov[[i]]$recovery_potential), 1000)]
+  edge_wdt <- rep(.5, nrow(tree_50$edge))
+  edge_wdt[match(ex_recov[[i]]$edge, tree_50$edge[, 2])] <- 3
+  plot.phylo(tree_50, edge.color = cols, show.tip.label = FALSE, edge.width = edge_wdt)
+  if (i == 1) {
+    fields::image.plot(legend.only = TRUE, zlim = c(0,1), col = viridisLite::magma(1000),
+                       horizontal = TRUE, smallplot = c(0.05, 0.4, 0.7, 0.8),
+                       legend.lab = "Relative Recovery Potential", legend.line = -4)
+  }
+}
+dev.print(svg, filename = "./figures/Example_Recovery_Potentials_50tips.svg", width = 6, height = 8)
+dev.print(png, filename = "./figures/Example_Recovery_Potentials_50tips.png", width = 6, height = 8,
+          units = "in", res = 300)
+
+## resulting trees ####
+tree_sub <- tree_df %>%
+  filter(n_tip == 50, mu == 0.9, sim == 1, fossil_prop == 0.5) %>%
+  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
+
+par(mfrow = c(1, 3), mar = c(7.5, 0, 0, 0))
+for (i in seq_len(nrow(tree_sub))) {
+  plot.phylo(ladderize(tree_sub$tree[[i]], right = FALSE), show.tip.label = FALSE)
+  palaeoverse::axis_geo_phylo(side = 1, lab_size = 1.5, cex.axis = 1.5,
+                              lwd = 1.5, height = 0.1,
+                              skip = c("Oligocene", "Holocene"),
+                              title = tree_sub$beta[i])
+}
+dev.print(svg, filename = "./figures/Example_Resulting_Trees_50tips.svg", width = 9, height = 4.5)
+dev.print(png, filename = "./figures/Example_Resulting_Trees_50tips.png", width = 9, height = 4.5,
+          units = "in", res = 300)
+
+## example trait simulations ####
+ind <- which(with(tree_df, n_tip == 200 & fossil_prop == 0.5 & mu == 0.9 & sim == 90 & beta == "random"))
+
+par(mfrow = c(2, 2), mar = c(2, 0, 2, 2))
+phenogram(tree_df$tree[[ind]], sBM_trait[[ind]][,1], fsize = FALSE, spread.labels = FALSE)
+phenogram(tree_df$tree[[ind]], strend_trait[[ind]][,1], fsize = FALSE, spread.labels = FALSE)
+phenogram(tree_df$tree[[ind]], sDC_trait[[ind]][,1], fsize = FALSE, spread.labels = FALSE)
+phenogram(tree_df$tree[[ind]], sOUs_trait[[ind]][,1], fsize = FALSE, spread.labels = FALSE)
+
+## testing theta values for OU model ####
+max_height <- max(nodeHeights(tree_df$tree[[ind]]))
+theta_vals <- c(1, 2, 3, 4, 5)
+halflives <- max_height / c(10, 5, 2, 1)
+ou_vals <- expand.grid(theta = theta_vals, halflife = halflives)
+ou_vals$alpha <- log(2) / ou_vals$halflife
+
+set.seed(1234)
+test_ou <- mapply(function(alpha, theta) mvSIM(tree_df$tree[[ind]], nsim = 2, model = "OU1",
+                        param = list(root = TRUE,
+                                     alpha = alpha, #strength of selection
+                                     theta = c(0, theta), #ancestral state, optimum
+                                     sigma = 0.1 #strength of drift
+                        )),
+                  alpha = ou_vals$alpha, theta = ou_vals$theta, SIMPLIFY = FALSE)
+
+par(mfrow = c(4, 5), mar = c(2, 4, 2, 0))
+#phenogram(tree_df$tree[[ind]], sBM_trait[[ind]][,1], fsize = FALSE, spread.labels = FALSE)
+#title("BM")
+for (i in seq_along(test_ou)) {
+  phenogram(tree_df$tree[[ind]], test_ou[[i]][,1], fsize = FALSE, spread.labels = FALSE, color = "blue")
+  for (j in 2:ncol(test_ou[[i]])) {
+    phenogram(tree_df$tree[[ind]], test_ou[[i]][, j], fsize = FALSE, spread.labels = FALSE, add = TRUE, color = "red")
+  }
+  title(paste("theta = ", ou_vals$theta[i], ", halflife = ", round(ou_vals$halflife[i], 1), sep = ""))
+}
+
+test_ou_ape <- mapply(function(alpha, theta) rTraitCont(tree_df$tree[[ind]], model = "OU",
+                                                        alpha = alpha, theta = theta, root.value = 0),
+                  alpha = ou_vals$alpha, theta = ou_vals$theta, SIMPLIFY = FALSE)
+par(mfrow = c(4, 5), mar = c(2, 4, 2, 0))
+for (i in seq_along(test_ou_ape)) {
+  phenogram(tree_df$tree[[ind]], test_ou_ape[[i]], fsize = FALSE, spread.labels = FALSE)
+  title(paste("theta = ", ou_vals$theta[i], ", halflife = ", round(ou_vals$halflife[i], 3), sep = ""))
+}
