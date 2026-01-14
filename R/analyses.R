@@ -139,7 +139,7 @@ wOUs_trait <- pblapply(tree_df$tree, function(tree) {
   mvSIM(tree = tree, nsim = 1, model = "OU1",
         param = list(root = TRUE,
                      alpha = log(2) / max_height, #strength of selection
-                     theta = c(0, 1), #ancestral state, optimum
+                     theta = c(0, 2), #ancestral state, optimum
                      sigma = 0.1 #strength of drift
         ))
 })
@@ -150,7 +150,7 @@ sOUs_trait <- pblapply(tree_df$tree, function(tree) {
   mvSIM(tree = tree, nsim = 1, model = "OU1",
         param = list(root = TRUE,
                      alpha = log(2) / (max_height / 5), #strength of selection
-                     theta = c(0, 1), #ancestral state, optimum
+                     theta = c(0, 2), #ancestral state, optimum
                      sigma = 0.1 #strength of drift
         ))
 })
@@ -927,7 +927,7 @@ theta_range_stats <- theta_estimates_df_long_clean %>%
 correct_thetas <- data.frame(model = factor(c("wOUc", "sOUc", "wOUs", "wOUs", "sOUs", "sOUs"),
                                             levels = c("wOUc", "sOUc", "wOUs", "sOUs")),
                              theta_text = c("θ", "θ", "root", "θ", "root", "θ"),
-                             theta_val = c(0, 0, 0, 1, 0, 1))
+                             theta_val = c(0, 0, 0, 2, 0, 2))
 gg4a <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.25)) +
   geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
   geom_violin(aes(x = beta, y = theta_val, fill = fossil_prop, color = fossil_prop),
