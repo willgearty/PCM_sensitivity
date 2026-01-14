@@ -861,6 +861,92 @@ ggsave("./figures/Prop_Correct_Clear_Combined3.pdf", gg2_i, width = 18.53, heigh
 ggsave("./figures/Prop_Correct_Clear_Combined3_25.pdf", gg2q, width = 18.53, height = 10)
 ggsave("./figures/Prop_Correct_Clear_Combined3_90.pdf", gg2r, width = 18.53, height = 10)
 
+### heatmap --------------------------------------------------------
+model_fits_df_summ5 <- model_fits_df_summ4 %>%
+  mutate(fossil_treatment = factor(case_when(
+    fossil_prop == 0 ~ "none",
+    .default = beta
+  ), levels = c("none", "recent", "random", "root"))) %>%
+  group_by(model, lambda, mu, fossil_treatment, correct) %>%
+  count(best_model) %>%
+  ungroup(fossil_treatment, correct) %>%
+  complete(fossil_treatment, best_model, fill = list(n = 0)) %>%
+  group_by(model, lambda, mu, fossil_treatment) %>%
+  mutate(prop = if(sum(n) == 0) NA else n / sum(n)) %>%
+  mutate(perc = round(prop, 2) * 100) %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(correct = ifelse(!is.na(prop) &&
+                            grepl(substr(model,
+                                         nchar(as.character(model)) - 1,
+                                         nchar(as.character(model))),
+                                  best_model), "correct", "incorrect")) %>%
+  ungroup()
+
+viridis_palette <- viridis::viridis_pal()(101)
+gg2s <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.25)) +
+  geom_tile(aes(x = model, y = best_model, fill = prop), color = NA) +
+  geom_tile(data = model_fits_df_summ5 %>% filter(mu == 0.25, correct == "correct"),
+            aes(x = model, y = best_model, color = correct), fill = NA, linewidth = 1) +
+  scale_x_discrete("Simulated Model", expand = expansion()) +
+  scale_y_discrete("Best Fit Model", expand = expansion()) +
+  coord_cartesian(clip = "off") +
+  scale_fill_viridis_c("Proportion of Simulations", limits = c(0, 1),
+                       guide = guide_colorbar(
+                         theme = theme(legend.title = element_text(vjust = 1),
+                                       legend.key.width = unit(15, "lines")),
+                         order = 1
+                       )) +
+  scale_color_manual(NULL, values = c("correct" = "red"),
+                     labels = c("correct" = "Correct Model"),
+                     guide = guide_legend(
+                       theme = theme(legend.text = element_text(size = 20, vjust = 1),
+                                     legend.key.justification = "top")
+                     )) +
+  theme_classic(base_size = 20, ink = "black") +
+  facet_grid(rows = vars(fossil_treatment),
+             labeller = labeller(fossil_treatment = c("none" = "no fossils",
+                                                      "root" = "root-biased\nfossils",
+                                                      "random" = "random\nfossils",
+                                                      "recent" = "recent-biased\nfossils"))) +
+  theme(legend.position = "bottom",,
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+gg2t <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.9)) +
+  geom_tile(aes(x = model, y = best_model, fill = prop), color = NA) +
+  geom_tile(data = model_fits_df_summ5 %>% filter(mu == 0.9, correct == "correct"),
+            aes(x = model, y = best_model, color = correct), fill = NA, linewidth = 1) +
+  geom_text(aes(x = model, y = best_model, label = perc / 100),
+            color = deeptime:::white_or_black(viridis_palette[
+              model_fits_df_summ5 %>% filter(mu == 0.9) %>% pull(perc) + 1]),
+            size = 4) +
+  scale_x_discrete("Simulated Model", expand = expansion()) +
+  scale_y_discrete("Best Fit Model", expand = expansion()) +
+  coord_cartesian(clip = "off") +
+  scale_fill_viridis_c("Proportion of Simulations", limits = c(0, 1),
+                       guide = guide_colorbar(
+                         theme = theme(legend.title = element_text(vjust = 1),
+                                       legend.key.width = unit(15, "lines")),
+                         order = 1
+                       )) +
+  scale_color_manual(NULL, values = c("correct" = "red"),
+                     labels = c("correct" = "Correct Model"),
+                     guide = guide_legend(
+                       theme = theme(legend.text = element_text(size = 20, vjust = 1),
+                                     legend.key.justification = "top")
+                     )) +
+  theme_classic(base_size = 20, ink = "black") +
+  facet_grid(rows = vars(fossil_treatment),
+             labeller = labeller(fossil_treatment = c("none" = "no fossils",
+                                                      "root" = "root-biased\nfossils",
+                                                      "random" = "random\nfossils",
+                                                      "recent" = "recent-biased\nfossils"))) +
+  theme(legend.position = "bottom",,
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+ggsave("./figures/Best_Fit_Heatmap_25.pdf", gg2s, width = 10, height = 12)
+ggsave("./figures/Best_Fit_Heatmap_90.pdf", gg2t, width = 10, height = 12)
+
 ## sigma plot ------------------------------------------------------
 correct_sigmas <- data.frame(model = factor(c("wBM", "sBM"), levels = c("wBM", "sBM")),
                              sigma = c(0.1, 0.5))
