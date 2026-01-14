@@ -311,10 +311,12 @@ model_fits_df <- lapply(model_results, \(mod) {
 colnames(model_fits_df)[10:11] <- c("OUc", "OUs")
 
 # remove the simulations that we don't want
-# (OUs and trend models without fossils)
+# 1. OUs and trend models without fossils
+# 2. duplicate fossil-less simulations
 
 model_fits_df_filt <- model_fits_df %>%
-  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0))
+  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0)) %>%
+  filter(!(fossil_prop == 0 & beta != "random"))
 
 fit_models <- c("BM", "trend", "OUc", "OUs", "ACDC")
 model_fits_df_long <- model_fits_df_filt %>%
@@ -355,7 +357,8 @@ param_estimates_df_clean <- param_estimates_df %>%
   filter(fit_model == correct_model) %>%
   select(-correct_model) %>%
   mutate(rel_hl = (log(2) / alpha) / sapply(tree_df$tree, function(tree) max(nodeHeights(tree)))) %>%
-  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0))
+  filter(!(model %in% c("wOUs", "sOUs", "wtrend", "strend") & fossil_prop == 0)) %>%
+  filter(!(fossil_prop == 0 & beta != "random"))
 
 # need to do some pivoting to get the two different theta values for each simulation
 theta_estimates_df_long <- param_estimates_df_clean %>%
@@ -790,9 +793,12 @@ gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
-gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
+gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9, !(beta != "random" & fossil_prop == 0))) +
   geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
            position = "fill") +
+  geom_bar(data = model_fits_df_summ4 %>% filter(mu == 0.9, beta == "random", fossil_prop == 0),
+           aes(x = fossil_prop, y = after_stat(count), fill = cor_clear), alpha = 0.5,
+           position = "fill", layout = "fixed_cols") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
