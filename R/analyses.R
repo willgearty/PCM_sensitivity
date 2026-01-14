@@ -394,7 +394,8 @@ model_fits_df_summ <- model_fits_df_long %>%
                                    fit_model[which(aicc_w == max(aicc_w, na.rm = TRUE))])),
             .groups = "drop") %>%
   group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
-  summarise(prop_true = sum(correct)/n(), .groups = "drop")
+  summarise(prop_true = sum(correct)/n(), .groups = "drop") %>%
+  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
 gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
@@ -435,7 +436,8 @@ model_fits_df_summ2 <- model_fits_df_long %>%
   group_by(n_tip, fossil_prop, lambda, mu, beta, fit_model) %>%
   count(correct_model) %>%
   mutate(prop = n / sum(n)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
 gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
   geom_line(aes(x = fossil_prop, y = prop, color = correct_model,
@@ -508,7 +510,8 @@ model_fits_df_summ3 <- model_fits_df_long %>%
   group_by(model, n_tip, fossil_prop, lambda, mu, beta) %>%
   count(fit_model) %>%
   mutate(prop_wrong = n / sum(n), prop_all = n / 100) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
 gg2e <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
   geom_col(data = . %>% filter(beta == "root-biased"),
@@ -660,7 +663,10 @@ gg2h <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   scale_fill_brewer("Simulated Model", palette = "Paired") +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2_d <- ggarrange2(gg2g, gg2h, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Best_Stacked.pdf", gg2_d, width = 18.53, height = 20)
@@ -683,7 +689,10 @@ gg2j <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
                      limits = c(0, 1)) +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2_e <- ggarrange2(gg2i, gg2j, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Best_Combined.pdf", gg2_e, width = 16, height = 20)
@@ -804,7 +813,10 @@ gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9, !(beta != "random" & fo
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2_g <- ggarrange2(gg2m, gg2n, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear_Combined.pdf", gg2_g, width = 18.53, height = 20)
@@ -1036,12 +1048,16 @@ gg4a <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.25)) +
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
 gg4b <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.9)) +
   geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
-  geom_violin(aes(x = beta, y = theta_val, fill = fossil_prop, color = fossil_prop),
-              scale = "width", drop = FALSE) +
-  geom_text(data = theta_range_stats %>% filter(mu == 0.9),
+  #geom_violin(aes(x = beta, y = theta_val, fill = fossil_prop), color = "yellow",
+  #            scale = "width", drop = FALSE, position = position_dodge(preserve = "single")) +
+  geom_violin(data = ~ .x %>% mutate(x_num = c("-1" = 1, "0" = 2, "1" = 3)[beta] +
+                                       c("0" = -.375, "0.1" = -.1875, "0.25" = 0, "0.5" = .1875, "0.95" = .375)[fossil_prop]),
+              aes(x = x_num, y = theta_val, fill = fossil_prop, group = as.factor(x_num), color = fossil_prop),
+              scale = "width", drop = FALSE, position = "identity") +
+  geom_text(data = theta_range_stats %>% filter(mu == 0.9, n > 0),
             aes(x = num_x, y = num_y, label = n, color = fossil_prop), size = 1.9) +
   scale_y_continuous("Estimated Theta", expand = expansion(mult = c(0.05, 0.1))) +
-  scale_x_discrete("Fossil Sampling Bias", labels = c("root-\nbiased", "random", "recent-\nbiased")) +
+  scale_x_discrete("Fossil Sampling Bias", limits = factor(1:3), labels = c("root-\nbiased", "random", "recent-\nbiased")) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
@@ -1097,8 +1113,9 @@ gg6a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "stren
   geom_violin(aes(x = beta, y = trend, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Trend") +
   scale_x_discrete("Fossil Sampling Bias", labels = c("root-\nbiased", "random", "recent-\nbiased")) +
-  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
-  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2", breaks = c(0.1, 0.25, 0.5, 0.95), limits = factor(c(0, 0.1, 0.25, 0.5, 0.95))) +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2", breaks = c(0.1, 0.25, 0.5, 0.95), limits = factor(c(0, 0.1, 0.25, 0.5, 0.95))) +
+  theme_bw(base_size = 20) +
   theme_bw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
@@ -1109,8 +1126,8 @@ gg6b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "stren
   geom_violin(aes(x = beta, y = trend, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Trend") +
   scale_x_discrete("Fossil Sampling Bias", labels = c("root-\nbiased", "random", "recent-\nbiased")) +
-  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
-  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
+  scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2", breaks = c(0.1, 0.25, 0.5, 0.95), limits = factor(c(0, 0.1, 0.25, 0.5, 0.95))) +
+  scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2", breaks = c(0.1, 0.25, 0.5, 0.95), limits = factor(c(0, 0.1, 0.25, 0.5, 0.95))) +
   theme_bw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
