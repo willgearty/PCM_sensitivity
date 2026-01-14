@@ -24,7 +24,23 @@ library(dplyr)
 sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
                               complete = FALSE, model = function(t) 1, progress = TRUE, ...)
 {
-  trees <- sim.bd.taxa(n, numbsim, lambda, mu, frac = 1, complete = TRUE)
+  # assumes that 0.9 is the maximum relative extinction rate
+  trees <- sim.bd.taxa(n * ((lambda / mu) / (1 / 0.9)), numbsim,
+                       lambda, mu, frac = 1, complete = TRUE)
+  # make sure all trees have enough extinct tips
+  while (TRUE) {
+    n_extinct <- sapply(trees, function(tr) length(is.extinct(tr)))
+    # ensure there is a surplus of extinct tips to sample from later
+    enough_extinct <- n_extinct > (prop_extinct * n * 1.2)
+    if (any(!enough_extinct)) {
+      cat("more")
+      more_trees <- sim.bd.taxa(n * ((lambda / mu) / (1 / 0.9)), sum(!enough_extinct),
+                                lambda, mu, frac = 1, complete = TRUE)
+      trees[!enough_extinct] <- more_trees
+    } else {
+      break
+    }
+  }
 
   if (progress) pb <- txtProgressBar(max = numbsim, style = 3)
   for (i in 1:length(trees))
