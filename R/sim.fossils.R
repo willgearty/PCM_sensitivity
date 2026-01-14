@@ -27,7 +27,7 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
   trees <- sim.bd.taxa(n, numbsim, lambda, mu, frac = 1, complete = TRUE)
 
   if (progress) pb <- txtProgressBar(max = numbsim, style = 3)
-  for(i in 1:length(trees))
+  for (i in 1:length(trees))
   {
     t <- trees[[i]]
     f <- sim.fossil.tips(prop_extinct * n, tree = t, model = model, ...)
@@ -51,7 +51,7 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
     if (progress) setTxtProgressBar(pb, i)
   }
   if (progress) close(pb)
-  class(trees) <- c("multiPhylo", "list")
+  # class(trees) <- c("multiPhylo", "list")
   return(trees)
 }
 
@@ -95,7 +95,7 @@ sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
   while (TRUE) {
     # simulate a large number of fossil occurrences with sim.fossils.poisson
     # until at least n extinct edges have fossils
-    foss <- sim.fossils.poisson(50, tree, root.edge = FALSE)
+    foss <- sim.fossils.poisson.data.table(50, tree, root.edge = FALSE)
     # filter to only those fossils on extinct branches (exclude extant tips and internal branches)
     foss_sub <- subset(foss, edge %in% match(is.extinct(tree), tree$tip.label))
     if (length(unique(foss_sub$edge)) >= n) break

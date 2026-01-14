@@ -6,8 +6,10 @@ library(ape); library(phytools); library(geiger); library(TreeSim)
 library(FossilSim); library(mvMORPH); library(pbapply); library(dplyr)
 library(tibble); library(tidyr); library(ggplot2); library(pcmtools)
 library(deeptime); library(future); library(forcats); library(ggh4x)
+library(data.table)
 
 # Load functions
+source("R/sim.fossils.poisson.R") # uses data.table::rbindlist for speed
 source("R/sim.fossils.R")
 
 # Download trees if missing ----------------------------------------------------
@@ -47,7 +49,7 @@ tree_df <- pbmapply(function(n_tip, fossil_prop, lambda, mu, model) {
   tmp
 }, n_tip = settings$n_tip, fossil_prop = settings$fossil_prop,
 lambda = settings$lambda, mu = settings$mu, model = settings$model,
-SIMPLIFY = FALSE) %>% do.call(rbind, .)
+SIMPLIFY = FALSE) %>% bind_rows()
 
 ## getting rid of possible zero-length branches
 # by adding 0.00001 to zero-length branches
