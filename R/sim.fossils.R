@@ -25,16 +25,18 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
                               complete = FALSE, model = function(t) 1, progress = TRUE, ...)
 {
   # assumes that 0.9 is the maximum relative extinction rate
-  trees <- sim.bd.taxa(n * ((lambda / mu) / (1 / 0.9)), numbsim,
+  n_extant_tips <- n * ((lambda / mu) / (1 / 0.9))
+  n_extinct_tips <- prop_extinct * n
+  trees <- sim.bd.taxa(n_extant_tips, numbsim,
                        lambda, mu, frac = 1, complete = TRUE)
   # make sure all trees have enough extinct tips
   while (TRUE) {
     n_extinct <- sapply(trees, function(tr) length(is.extinct(tr)))
     # ensure there is a surplus of extinct tips to sample from later
-    enough_extinct <- n_extinct > (prop_extinct * n * 1.2)
+    enough_extinct <- n_extinct > (n_extinct_tips * 1.2)
     if (any(!enough_extinct)) {
       cat("more")
-      more_trees <- sim.bd.taxa(n * ((lambda / mu) / (1 / 0.9)), sum(!enough_extinct),
+      more_trees <- sim.bd.taxa(n_extant_tips, sum(!enough_extinct),
                                 lambda, mu, frac = 1, complete = TRUE)
       trees[!enough_extinct] <- more_trees
     } else {
@@ -46,7 +48,7 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
   for (i in 1:length(trees))
   {
     t <- trees[[i]]
-    f <- sim.fossil.tips(prop_extinct * n, tree = t, model = model, ...)
+    f <- sim.fossil.tips(n_extinct_tips, tree = t, model = model, ...)
 
     tree <- SAtree.from.fossils(t, f)$tree
 
@@ -55,7 +57,7 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
     origin <- max(node.ages) + tree$root.edge
 
     if ( !complete ) {
-      tree <- FossilSim:::drop.unsampled(tree, frac = 1 - prop_extinct, n = -1)
+      tree <- FossilSim:::drop.unsampled(tree, frac = (n - n_extinct_tips) / n_extant_tips, n = -1)
       node.ages <- FossilSim:::n.ages(tree)
     }
 
