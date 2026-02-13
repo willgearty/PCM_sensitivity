@@ -371,7 +371,7 @@ theta_estimates_df_long <- param_estimates_df_clean %>%
 remove(model_results)
 
 ## AIC plot ------------------------------------------------------
-gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.25")) +
+gg1 <- ggplot(model_fits_df_long %>% filter(mu == "0.5")) +
   geom_violin(aes(x = factor(fossil_prop), y = aicc_w, color = fit_model)) +
   scale_color_brewer(palette = "Dark2") +
   facet_grid(rows = vars(n_tip), cols = vars(model)) +
@@ -397,7 +397,7 @@ model_fits_df_summ <- model_fits_df_long %>%
   summarise(prop_true = sum(correct)/n(), .groups = "drop") %>%
   mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
-gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
+gg2a <- ggplot(model_fits_df_summ %>% filter(mu == 0.5)) +
   geom_line(aes(x = fossil_prop, y = prop_true, color = n_tip,
                 linetype = beta, group = interaction(n_tip, beta))) +
   scale_x_discrete("Proportion of Fossils in Tree") +
@@ -415,9 +415,9 @@ gg2b <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   scale_linetype_discrete("Fossil Distribution") +
   theme_bw(base_size = 20) +
   facet_wrap(~model)
-gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2 <- ggarrange2(gg2a, gg2b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Best.pdf", gg2, width = 16, height = 20)
-ggsave("./figures/Prop_Best_25.pdf", gg2a, width = 16, height = 10)
+ggsave("./figures/Prop_Best_50.pdf", gg2a, width = 16, height = 10)
 ggsave("./figures/Prop_Best_90.pdf", gg2b, width = 16, height = 10)
 
 # generating models for best fitting models
@@ -439,7 +439,7 @@ model_fits_df_summ2 <- model_fits_df_long %>%
   ungroup() %>%
   mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
-gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
+gg2c <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.5)) +
   geom_line(aes(x = fossil_prop, y = prop, color = correct_model,
                 linetype = beta, group = interaction(correct_model, beta))) +
   scale_x_discrete("Proportion of Fossils in Tree") +
@@ -459,12 +459,12 @@ gg2d <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_b <- ggarrange2(gg2c, gg2d, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Sim.pdf", gg2_b, width = 16, height = 25)
-ggsave("./figures/Prop_Sim_25.pdf", gg2c, width = 16, height = 12.5)
+ggsave("./figures/Prop_Sim_50.pdf", gg2c, width = 16, height = 12.5)
 ggsave("./figures/Prop_Sim_90.pdf", gg2d, width = 16, height = 12.5)
 
-gg2c_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.25)) +
+gg2c_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.5)) +
   geom_line(aes(x = fossil_prop, y = n, color = correct_model,
                 linetype = beta, group = interaction(correct_model, beta))) +
   scale_x_discrete("Proportion of Fossils in Tree") +
@@ -484,9 +484,9 @@ gg2d_n <- ggplot(model_fits_df_summ2 %>% filter(mu == 0.9)) +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(fit_model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg2_b_n <- ggarrange2(gg2c_n, gg2d_n, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_b_n <- ggarrange2(gg2c_n, gg2d_n, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/N_Sim.pdf", gg2_b_n, width = 16, height = 25)
-ggsave("./figures/N_Sim_25.pdf", gg2c_n, width = 16, height = 12.5)
+ggsave("./figures/N_Sim_50.pdf", gg2c_n, width = 16, height = 12.5)
 ggsave("./figures/N_Sim_90.pdf", gg2d_n, width = 16, height = 12.5)
 
 # when wrong answer, what is it?
@@ -513,7 +513,7 @@ model_fits_df_summ3 <- model_fits_df_long %>%
   ungroup() %>%
   mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
 
-gg2e <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
+gg2e <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.5)) +
   geom_col(data = . %>% filter(beta == "root-biased"),
            aes(x = as.numeric(fossil_prop) - .25, y = n, fill = fit_model, color = "blue"),
            position = "stack", width = .2) +
@@ -549,12 +549,12 @@ gg2f <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
   facet_grid(cols = vars(model), rows = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
-gg2_c <- ggarrange2(gg2e, gg2f, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_c <- ggarrange2(gg2e, gg2f, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Wrong_Best2.pdf", gg2_c, width = 40, height = 40)
-ggsave("./figures/Wrong_Best2_25.pdf", gg2e, width = 40, height = 20)
+ggsave("./figures/Wrong_Best2_50.pdf", gg2e, width = 40, height = 20)
 ggsave("./figures/Wrong_Best2_90.pdf", gg2f, width = 40, height = 20)
 
-gg2e2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25)) +
+gg2e2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.5)) +
   geom_col(aes(x = fossil_prop, y = n, fill = fit_model), position = "stack") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
@@ -570,12 +570,12 @@ gg2f2 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
   theme_bw(base_size = 20) +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg2_c2 <- ggarrange2(gg2e2, gg2f2, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_c2 <- ggarrange2(gg2e2, gg2f2, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Wrong_Best.pdf", gg2_c2, width = 40, height = 40)
-ggsave("./figures/Wrong_Best_25.pdf", gg2e2, width = 40, height = 20)
+ggsave("./figures/Wrong_Best_50.pdf", gg2e2, width = 40, height = 20)
 ggsave("./figures/Wrong_Best_90.pdf", gg2f2, width = 40, height = 20)
 
-gg2e3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wBM", "sBM", "wtrend", "strend"))) +
+gg2e3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.5, model %in% c("wBM", "sBM", "wtrend", "strend"))) +
   geom_col(aes(x = fossil_prop, y = n, fill = fit_model), position = "stack") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
@@ -591,10 +591,10 @@ gg2f3 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wBM", "s
   theme_bw(base_size = 20) +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
-ggsave("./figures/Wrong_Best_BM_25.pdf", gg2e3, width = 16, height = 20)
+ggsave("./figures/Wrong_Best_BM_50.pdf", gg2e3, width = 16, height = 20)
 ggsave("./figures/Wrong_Best_BM_90.pdf", gg2f3, width = 16, height = 20)
 
-gg2e4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wOUc", "sOUc", "wOUs", "sOUs"))) +
+gg2e4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.5, model %in% c("wOUc", "sOUc", "wOUs", "sOUs"))) +
   geom_col(aes(x = fossil_prop, y = n, fill = fit_model), position = "stack") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
@@ -610,10 +610,10 @@ gg2f4 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wOUc", "
   theme_bw(base_size = 20) +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
-ggsave("./figures/Wrong_Best_OU_25.pdf", gg2e4, width = 16, height = 20)
+ggsave("./figures/Wrong_Best_OU_50.pdf", gg2e4, width = 16, height = 20)
 ggsave("./figures/Wrong_Best_OU_90.pdf", gg2f4, width = 16, height = 20)
 
-gg2e5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.25, model %in% c("wAC", "sAC", "wDC", "sDC"))) +
+gg2e5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.5, model %in% c("wAC", "sAC", "wDC", "sDC"))) +
   geom_col(aes(x = fossil_prop, y = n, fill = fit_model), position = "stack") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Number of Simulations", limits = c(0, 100)) +
@@ -629,7 +629,7 @@ gg2f5 <- ggplot(model_fits_df_summ3 %>% filter(mu == 0.9, model %in% c("wAC", "s
   theme_bw(base_size = 20) +
   facet_nested(beta + n_tip ~ model,
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
-ggsave("./figures/Wrong_Best_ACDC_25.pdf", gg2e5, width = 16, height = 20)
+ggsave("./figures/Wrong_Best_ACDC_50.pdf", gg2e5, width = 16, height = 20)
 ggsave("./figures/Wrong_Best_ACDC_90.pdf", gg2f5, width = 16, height = 20)
 
 ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
@@ -645,7 +645,7 @@ ggplot(model_fits_df_summ3 %>% filter(mu == 0.9)) +
 ggsave("./figures/test2.pdf", width = 40, height = 20)
 
 # summarize proportion of correct models
-gg2g <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
+gg2g <- ggplot(model_fits_df_summ %>% filter(mu == 0.5)) +
   geom_col(aes(x = fossil_prop, y = prop_true / 12, fill = model)) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Prop. of Simulations Correctly Identified",
@@ -653,7 +653,10 @@ gg2g <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
   scale_fill_brewer("Simulated Model", palette = "Paired") +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2h <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   geom_col(aes(x = fossil_prop, y = prop_true / 12, fill = model)) +
@@ -668,19 +671,22 @@ gg2h <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
                                           "random" = "random",
                                           "recent" = "recent-biased")))
 
-gg2_d <- ggarrange2(gg2g, gg2h, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_d <- ggarrange2(gg2g, gg2h, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Best_Stacked.pdf", gg2_d, width = 18.53, height = 20)
-ggsave("./figures/Prop_Best_Stacked_25.pdf", gg2g, width = 18.53, height = 10)
+ggsave("./figures/Prop_Best_Stacked_50.pdf", gg2g, width = 18.53, height = 10)
 ggsave("./figures/Prop_Best_Stacked_90.pdf", gg2h, width = 18.53, height = 10)
 
-gg2i <- ggplot(model_fits_df_summ %>% filter(mu == 0.25)) +
+gg2i <- ggplot(model_fits_df_summ %>% filter(mu == 0.5)) +
   geom_col(aes(x = fossil_prop, y = prop_true / 12)) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Prop. of Simulations Correctly Identified",
                      limits = c(0, 1)) +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2j <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
   geom_col(aes(x = fossil_prop, y = prop_true / 12)) +
@@ -694,9 +700,9 @@ gg2j <- ggplot(model_fits_df_summ %>% filter(mu == 0.9)) +
                                           "random" = "random",
                                           "recent" = "recent-biased")))
 
-gg2_e <- ggarrange2(gg2i, gg2j, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_e <- ggarrange2(gg2i, gg2j, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Best_Combined.pdf", gg2_e, width = 16, height = 20)
-ggsave("./figures/Prop_Best_Combined_25.pdf", gg2i, width = 16, height = 10)
+ggsave("./figures/Prop_Best_Combined_50.pdf", gg2i, width = 16, height = 10)
 ggsave("./figures/Prop_Best_Combined_90.pdf", gg2j, width = 16, height = 10)
 
 # proportions of simulations with clear best model
@@ -728,7 +734,7 @@ model_fits_df_summ4 <- model_fits_df_long %>%
 model_fits_df_summ4 %>%
   summarise(t(table(correct)/n()))
 
-gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
+gg2k <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.5)) +
   geom_bar(data = . %>% filter(beta == "root-biased"),
            aes(x = as.numeric(fossil_prop) - .25,
                fill = cor_clear, color = "blue"),
@@ -786,21 +792,27 @@ gg2l <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   theme(legend.spacing.x = unit(.2, 'lines'))
 
-gg2_f <- ggarrange2(gg2k, gg2l, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_f <- ggarrange2(gg2k, gg2l, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear.pdf", gg2_f, width = 40, height = 40)
-ggsave("./figures/Prop_Correct_Clear_25.pdf", gg2k, width = 40, height = 20)
+ggsave("./figures/Prop_Correct_Clear_50.pdf", gg2k, width = 40, height = 20)
 ggsave("./figures/Prop_Correct_Clear_90.pdf", gg2l, width = 40, height = 20)
 
 # and the same but combined across simulated models
-gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
+gg2m <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.5)) +
   geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
            position = "fill") +
+  geom_bar(data = model_fits_df_summ4 %>% filter(mu == 0.5, beta == "random", fossil_prop == 0),
+           aes(x = fossil_prop, y = after_stat(count), fill = cor_clear), alpha = 0.5,
+           position = "fill", layout = "fixed_cols") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(n_tip), rows = vars(beta),
-             labeller = labeller(n_tip = function(x) paste(x, "tips")))
+             labeller = labeller(n_tip = function(x) paste(x, "tips"),
+                                 beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9, !(beta != "random" & fossil_prop == 0))) +
   geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
@@ -818,13 +830,13 @@ gg2n <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9, !(beta != "random" & fo
                                           "random" = "random",
                                           "recent" = "recent-biased")))
 
-gg2_g <- ggarrange2(gg2m, gg2n, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_g <- ggarrange2(gg2m, gg2n, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear_Combined.pdf", gg2_g, width = 18.53, height = 20)
-ggsave("./figures/Prop_Correct_Clear_Combined_25.pdf", gg2m, width = 18.53, height = 10)
+ggsave("./figures/Prop_Correct_Clear_Combined_50.pdf", gg2m, width = 18.53, height = 10)
 ggsave("./figures/Prop_Correct_Clear_Combined_90.pdf", gg2n, width = 18.53, height = 10)
 
 # same but split out by simulated model, not phylogeny size
-gg2o <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.25)) +
+gg2o <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.5)) +
   geom_bar(aes(x = fossil_prop, y = after_stat(count), fill = cor_clear),
            position = "fill") +
   scale_x_discrete("Proportion of Fossils in Tree") +
@@ -844,9 +856,9 @@ gg2p <- ggplot(model_fits_df_summ4 %>% filter(mu == 0.9)) +
   facet_grid(cols = vars(beta), rows = vars(model),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
 
-gg2_h <- ggarrange2(gg2o, gg2p, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_h <- ggarrange2(gg2o, gg2p, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear_Combined2.pdf", gg2_h, width = 10, height = 40)
-ggsave("./figures/Prop_Correct_Clear_Combined2_25.pdf", gg2o, width = 10, height = 20)
+ggsave("./figures/Prop_Correct_Clear_Combined2_50.pdf", gg2o, width = 10, height = 20)
 ggsave("./figures/Prop_Correct_Clear_Combined2_90.pdf", gg2p, width = 10, height = 20)
 
 # same but collapsed by model groupings
@@ -858,7 +870,7 @@ model_fits_df_summ4_summ <- model_fits_df_summ4 %>%
   mutate(prop = n / sum(n)) %>%
   ungroup()
 
-gg2q <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.25)) +
+gg2q <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.5)) +
   geom_col(aes(x = fossil_prop, y = prop, fill = cor_clear)) +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
@@ -874,9 +886,9 @@ gg2r <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.9)) +
   theme_bw(base_size = 20) +
   facet_grid(cols = vars(model_summ), rows = vars(beta))
 
-gg2_i <- ggarrange2(gg2q, gg2r, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg2_i <- ggarrange2(gg2q, gg2r, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear_Combined3.pdf", gg2_i, width = 18.53, height = 20)
-ggsave("./figures/Prop_Correct_Clear_Combined3_25.pdf", gg2q, width = 18.53, height = 10)
+ggsave("./figures/Prop_Correct_Clear_Combined3_50.pdf", gg2q, width = 18.53, height = 10)
 ggsave("./figures/Prop_Correct_Clear_Combined3_90.pdf", gg2r, width = 18.53, height = 10)
 
 ### heatmap --------------------------------------------------------
@@ -902,9 +914,9 @@ model_fits_df_summ5 <- model_fits_df_summ4 %>%
   ungroup()
 
 viridis_palette <- viridis::viridis_pal()(101)
-gg2s <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.25)) +
+gg2s <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.5)) +
   geom_tile(aes(x = model, y = best_model, fill = prop), color = NA) +
-  geom_tile(data = model_fits_df_summ5 %>% filter(mu == 0.25, correct == "correct"),
+  geom_tile(data = model_fits_df_summ5 %>% filter(mu == 0.5, correct == "correct"),
             aes(x = model, y = best_model, color = correct), fill = NA, linewidth = 1) +
   scale_x_discrete("Simulated Model", expand = expansion()) +
   scale_y_discrete("Best Fit Model", expand = expansion()) +
@@ -962,14 +974,14 @@ gg2t <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.9)) +
   theme(legend.position = "bottom",,
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
-ggsave("./figures/Best_Fit_Heatmap_25.pdf", gg2s, width = 10, height = 12)
+ggsave("./figures/Best_Fit_Heatmap_50.pdf", gg2s, width = 10, height = 12)
 ggsave("./figures/Best_Fit_Heatmap_90.pdf", gg2t, width = 10, height = 12)
 
 ## sigma plot ------------------------------------------------------
 correct_sigmas <- data.frame(model = factor(c("wBM", "sBM"), levels = c("wBM", "sBM")),
                              sigma = c(0.1, 0.5))
 
-gg3a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wBM", "sBM"), mu == 0.25)) +
+gg3a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wBM", "sBM"), mu == 0.5)) +
   geom_hline(data = correct_sigmas, aes(yintercept = sigma), linewidth = 1.25) +
   geom_violin(aes(x = beta, y = sigma, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Sigma") +
@@ -993,9 +1005,9 @@ gg3b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wBM", "sBM"), m
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(0, 1))
-gg3 <- ggarrange2(gg3a, gg3b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg3 <- ggarrange2(gg3a, gg3b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Sigmas.pdf", gg3, width = 16, height = 14)
-ggsave("./figures/Sigmas_25.pdf", gg3a, width = 16, height = 7)
+ggsave("./figures/Sigmas_50.pdf", gg3a, width = 16, height = 7)
 ggsave("./figures/Sigmas_90.pdf", gg3b, width = 16, height = 7)
 
 ## theta plot ------------------------------------------------------
@@ -1032,14 +1044,18 @@ correct_thetas <- data.frame(model = factor(c("wOUc", "sOUc", "wOUs", "wOUs", "s
                                             levels = c("wOUc", "sOUc", "wOUs", "sOUs")),
                              theta_text = c("θ", "θ", "root", "θ", "root", "θ"),
                              theta_val = c(0, 0, 0, 2, 0, 2))
-gg4a <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.25)) +
+gg4a <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.5)) +
   geom_hline(data = correct_thetas, aes(yintercept = theta_val), linewidth = 1.25, color = "grey30") +
-  geom_violin(aes(x = beta, y = theta_val, fill = fossil_prop, color = fossil_prop),
-              scale = "width", drop = FALSE) +
-  geom_text(data = theta_range_stats %>% filter(mu == 0.25),
+  #geom_violin(aes(x = beta, y = theta_val, fill = fossil_prop), color = "yellow",
+  #            scale = "width", drop = FALSE, position = position_dodge(preserve = "single")) +
+  geom_violin(data = ~ .x %>% mutate(x_num = c("-1" = 1, "0" = 2, "1" = 3)[beta] +
+                                       c("0" = -.375, "0.1" = -.1875, "0.25" = 0, "0.5" = .1875, "0.95" = .375)[fossil_prop]),
+              aes(x = x_num, y = theta_val, fill = fossil_prop, group = as.factor(x_num), color = fossil_prop),
+              scale = "width", drop = FALSE, position = "identity") +
+  geom_text(data = theta_range_stats %>% filter(mu == 0.5, n > 0),
             aes(x = num_x, y = num_y, label = n, color = fossil_prop), size = 1.9) +
   scale_y_continuous("Estimated Theta", expand = expansion(mult = c(0.05, 0.1))) +
-  scale_x_discrete("Fossil Sampling Bias", labels = c("root-\nbiased", "random", "recent-\nbiased")) +
+  scale_x_discrete("Fossil Sampling Bias", limits = factor(1:3), labels = c("root-\nbiased", "random", "recent-\nbiased")) +
   scale_fill_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   scale_color_brewer("prop. of tips\nthat are\nfossils", palette = "Dark2") +
   theme_bw(base_size = 20) +
@@ -1064,9 +1080,9 @@ gg4b <- ggplot(theta_estimates_df_long_clean %>% filter(mu == 0.9)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_nested(model + theta_text ~ n_tip, scales = "free_y",
                labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg4 <- ggarrange2(gg4a, gg4b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Thetas.pdf", gg4, width = 16, height = 22, device = cairo_pdf)
-ggsave("./figures/Thetas_25.pdf", gg4a, width = 16, height = 11, device = cairo_pdf)
+ggsave("./figures/Thetas_50.pdf", gg4a, width = 16, height = 11, device = cairo_pdf)
 ggsave("./figures/Thetas_90.pdf", gg4b, width = 16, height = 11, device = cairo_pdf)
 
 ## half-life plot ----------------------------------------------
@@ -1076,7 +1092,7 @@ correct_rhls <- data.frame(model = factor(c("wOUc", "sOUc", "wOUs", "sOUs"),
                            rel_hl = c(1, 1/5, 1, 1/5))
 
 gg5a <- ggplot(param_estimates_df_clean %>%
-                 filter(model %in% c("wOUc", "wOUs", "sOUc", "sOUs"), mu == 0.25)) +
+                 filter(model %in% c("wOUc", "wOUs", "sOUc", "sOUs"), mu == 0.5)) +
   geom_hline(data = correct_rhls, aes(yintercept = rel_hl)) +
   geom_violin(aes(x = beta, y = rel_hl, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Relative Phylogenetic Half-life") +
@@ -1099,16 +1115,16 @@ gg5b <- ggplot(param_estimates_df_clean %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip), scales = "free_y",
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg5 <- ggarrange2(gg5a, gg5b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg5 <- ggarrange2(gg5a, gg5b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Halflives.pdf", gg5, width = 22, height = 22)
-ggsave("./figures/Halflives_25.pdf", gg5a, width = 22, height = 11)
+ggsave("./figures/Halflives_50.pdf", gg5a, width = 22, height = 11)
 ggsave("./figures/Halflives_90.pdf", gg5b, width = 22, height = 11)
 
 ## trend plot ----------------------------------------------
 correct_trends <- data.frame(model = factor(c("wtrend", "strend"), levels = c("wtrend", "strend")),
                              trend = c(0.1, 0.3))
 
-gg6a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "strend"), mu == 0.25)) +
+gg6a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "strend"), mu == 0.5)) +
   geom_hline(data = correct_trends, aes(yintercept = trend)) +
   geom_violin(aes(x = beta, y = trend, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Trend") +
@@ -1133,16 +1149,16 @@ gg6b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wtrend", "stren
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips"))) +
   coord_cartesian(ylim = c(-0.1, 0.5))
-gg6 <- ggarrange2(gg6a, gg6b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg6 <- ggarrange2(gg6a, gg6b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Trends.pdf", gg6, width = 16, height = 14)
-ggsave("./figures/Trends_25.pdf", gg6a, width = 16, height = 7)
+ggsave("./figures/Trends_50.pdf", gg6a, width = 16, height = 7)
 ggsave("./figures/Trends_90.pdf", gg6b, width = 16, height = 7)
 
 ## beta plot -----------------------------------------------
 correct_betas <- data.frame(model = factor(c("wAC", "sAC", "wDC", "sDC"), levels = c("wAC", "sAC", "wDC", "sDC")),
                             exp_rate = c(0.1, 0.3, -0.1, -0.3))
 
-gg7a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.25)) +
+gg7a <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "wDC", "sDC"), mu == 0.5)) +
   geom_hline(data = correct_betas, aes(yintercept = exp_rate)) +
   geom_violin(aes(x = beta, y = exp_rate, fill = fossil_prop, color = fossil_prop)) +
   scale_y_continuous("Estimated Beta") +
@@ -1164,9 +1180,9 @@ gg7b <- ggplot(param_estimates_df_clean %>% filter(model %in% c("wAC", "sAC", "w
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   facet_grid(rows = vars(model), cols = vars(n_tip),
              labeller = labeller(n_tip = function(x) paste(x, "tips")))
-gg7 <- ggarrange2(gg7a, gg7b, nrow = 2, draw = FALSE, labels = c("mu = 0.25", "mu = 0.9"))
+gg7 <- ggarrange2(gg7a, gg7b, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Betas.pdf", gg7, width = 16, height = 14)
-ggsave("./figures/Betas_25.pdf", gg7a, width = 16, height = 7)
+ggsave("./figures/Betas_50.pdf", gg7a, width = 16, height = 7)
 ggsave("./figures/Betas_90.pdf", gg7b, width = 16, height = 7)
 
 ## heights of fossils --------------------------------------
@@ -1204,7 +1220,7 @@ fossil_heights_bins <- fossil_heights %>%
   mutate(perc_foss = n / (n_tip * fossil_prop * 100) * 100,
          height_bin_cont = as.numeric(height_bin) / 20 - 0.025)
 
-gg6 <- ggplot(fossil_heights_bins %>% filter(mu == 0.25)) +
+gg6 <- ggplot(fossil_heights_bins %>% filter(mu == 0.5)) +
   geom_col(aes(x = height_bin_cont, y = perc_foss, fill = factor(beta)),
            position = "dodge") +
   scale_x_continuous("Relative Height in Phylogeny") +
@@ -1230,7 +1246,7 @@ gg7 <- ggplot(fossil_heights_bins %>% filter(mu == 0.90)) +
                                    paste0(as.numeric(x) * 100, "% fossils")
                                  })) +
   theme(legend.position = "top", panel.spacing.x = unit(1.5, "lines"))
-ggsave("./figures/Fossil_heights_25.pdf", gg6, width = 12, height = 12)
+ggsave("./figures/Fossil_heights_50.pdf", gg6, width = 12, height = 12)
 ggsave("./figures/Fossil_heights_90.pdf", gg7, width = 12, height = 12)
 
 # plots for schematic ####
