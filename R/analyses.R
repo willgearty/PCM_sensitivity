@@ -5,8 +5,8 @@
 library(ape); library(phytools); library(geiger); library(TreeSim)
 library(FossilSim); library(mvMORPH); library(pbapply); library(dplyr)
 library(tibble); library(tidyr); library(ggplot2); library(pcmtools)
-library(deeptime); library(future); library(forcats); library(ggh4x)
-library(data.table)
+library(deeptime); library(future); library(future.apply)
+library(forcats); library(ggh4x); library(data.table)
 
 # Load functions
 source("R/sim.fossils.poisson.R") # uses data.table::rbindlist for speed
@@ -33,9 +33,10 @@ n_sim <- 100
 settings <- expand.grid(n_tip = n_tips, fossil_prop = fossil_props,
                         lambda = lambdas, mu = mus, model = names(models))
 
+plan(multisession, workers = 8)
 # Simulate trees -----------------------------------------------------------
 set.seed(1234)
-tree_df <- pbmapply(function(n_tip, fossil_prop, lambda, mu, model) {
+tree_df <- future_mapply(function(n_tip, fossil_prop, lambda, mu, model) {
   trees <- sim.fbd.taxa.prop(n_tip, fossil_prop, numbsim = n_sim,
                              lambda = lambda, mu = mu,
                              model = models[[model]], progress = FALSE)
@@ -49,7 +50,7 @@ tree_df <- pbmapply(function(n_tip, fossil_prop, lambda, mu, model) {
   tmp
 }, n_tip = settings$n_tip, fossil_prop = settings$fossil_prop,
 lambda = settings$lambda, mu = settings$mu, model = settings$model,
-SIMPLIFY = FALSE) %>% bind_rows()
+SIMPLIFY = FALSE, future.seed = TRUE) %>% bind_rows()
 
 ## getting rid of possible zero-length branches
 # by adding 0.00001 to zero-length branches
