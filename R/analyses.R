@@ -23,7 +23,7 @@ source("R/sim.fossils.R")
 n_tips <- c(50, 100, 200, 500, 1000)
 fossil_props <- c(0, 0.1, 0.25, 0.5, 0.95)
 lambdas <- 1
-mus <- c(0.25, 0.9)
+mus <- c(0.5, 0.9)
 models <- list("root" = function(x) 10 ^ -(x - 1) - 1,
                "random" = function(x) 1,
                "recent" = function(x) 100 ^ x - 1)
