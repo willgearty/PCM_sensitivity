@@ -873,19 +873,31 @@ model_fits_df_summ4_summ <- model_fits_df_summ4 %>%
 
 gg2q <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.5)) +
   geom_col(aes(x = fossil_prop, y = prop, fill = cor_clear)) +
+  geom_col(data = model_fits_df_summ4_summ %>% filter(mu == 0.5, beta == "random", fossil_prop == 0),
+           aes(x = fossil_prop, y = prop, fill = cor_clear), alpha = 0.5,
+           position = "fill", layout = "fixed_cols") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(model_summ), rows = vars(beta))
+  facet_grid(cols = vars(model_summ), rows = vars(beta),
+             labeller = labeller(beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2r <- ggplot(model_fits_df_summ4_summ %>% filter(mu == 0.9)) +
   geom_col(aes(x = fossil_prop, y = prop, fill = cor_clear)) +
+  geom_col(data = model_fits_df_summ4_summ %>% filter(mu == 0.9, beta == "random", fossil_prop == 0),
+           aes(x = fossil_prop, y = prop, fill = cor_clear), alpha = 0.5,
+           position = "fill", layout = "fixed_cols") +
   scale_x_discrete("Proportion of Fossils in Tree") +
   scale_y_continuous("Proportion of Simulations", limits = c(0, 1)) +
   scale_fill_brewer("Fit Status", palette = "Dark2") +
   theme_bw(base_size = 20) +
-  facet_grid(cols = vars(model_summ), rows = vars(beta))
+  facet_grid(cols = vars(model_summ), rows = vars(beta),
+             labeller = labeller(beta = c("root" = "root-biased",
+                                          "random" = "random",
+                                          "recent" = "recent-biased")))
 
 gg2_i <- ggarrange2(gg2q, gg2r, nrow = 2, draw = FALSE, labels = c("mu = 0.5", "mu = 0.9"))
 ggsave("./figures/Prop_Correct_Clear_Combined3.pdf", gg2_i, width = 18.53, height = 20)
@@ -919,6 +931,10 @@ gg2s <- ggplot(model_fits_df_summ5 %>% filter(mu == 0.5)) +
   geom_tile(aes(x = model, y = best_model, fill = prop), color = NA) +
   geom_tile(data = model_fits_df_summ5 %>% filter(mu == 0.5, correct == "correct"),
             aes(x = model, y = best_model, color = correct), fill = NA, linewidth = 1) +
+  geom_text(aes(x = model, y = best_model, label = perc / 100),
+            color = deeptime:::white_or_black(viridis_palette[
+              model_fits_df_summ5 %>% filter(mu == 0.5) %>% pull(perc) + 1]),
+            size = 4) +
   scale_x_discrete("Simulated Model", expand = expansion()) +
   scale_y_discrete("Best Fit Model", expand = expansion()) +
   coord_cartesian(clip = "off") +
