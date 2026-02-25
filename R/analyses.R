@@ -1269,21 +1269,22 @@ ggsave("./figures/Fossil_heights_90.pdf", gg7, width = 12, height = 12)
 # plots for schematic ####
 # TODO: finish schematic components and combine them (and make it pretty)
 ## intial full trees ####
-par(mfrow = c(5, 1), mar = c(0, 0, 0, 0))
+par(mfrow = c(5, 1))
 set.seed(1234)
 ex_trees <- sapply(n_tips, FUN = function(n) {
   sim.bd.taxa(n, 1, 1, 0.9, frac = 1, complete = TRUE)[[1]]
 }, USE.NAMES = TRUE, simplify = FALSE)
 
 lapply(ex_trees, FUN = function(tree) {
-  plot.phylo(tree, show.tip.label = FALSE, no.margin = TRUE)
+  plot.phylo(tree, show.tip.label = FALSE)
 })
 
 tree_50 <- ladderize(ex_trees[[1]], right = FALSE)
 tree_200 <- ladderize(ex_trees[[3]], right = FALSE)
 
 layout(1)
-plot.phylo(tree_50, show.tip.label = FALSE, no.margin = TRUE)
+plot.phylo(tree_50, show.tip.label = FALSE)
+axisPhylo()
 dev.print(svg, filename = "./figures/Example_Full_Tree_50tips.svg", width = 8, height = 6)
 dev.print(png, filename = "./figures/Example_Full_Tree_50tips.png", width = 8, height = 6,
           units = "in", res = 300)
@@ -1300,7 +1301,8 @@ yy <- node.height(tree_50)
 ex_foss_low$x <- max(xx) - ex_foss_low$hmax
 ex_foss_low$y <- yy[ex_foss_low$edge]
 
-plot.phylo(tree_50, show.tip.label = FALSE, no.margin = TRUE)
+plot.phylo(tree_50, show.tip.label = FALSE)
+axisPhylo()
 points(ex_foss_low$x, ex_foss_low$y, col = "red", pch = 18, cex = 0.75)
 dev.print(svg, filename = "./figures/Example_Fossils_LowRate_50tips.svg", width = 8, height = 6)
 dev.print(png, filename = "./figures/Example_Fossils_LowRate_50tips.png", width = 8, height = 6,
@@ -1312,18 +1314,21 @@ ex_foss_high <- sim.fossils.poisson(50, tree_50, root.edge = FALSE)
 
 # calculate recovery potentials under different models
 foss_sub <- subset(ex_foss_high, edge <= Ntip(tree_50))
-ex_recov <- lapply(models, function(model) {
+foss_sub <- lapply(models, function(model) {
   max_age <- max(FossilSim:::n.ages(tree_50))
   foss_sub$rel_age <- (max_age - foss_sub$hmin) / max_age
   foss_sub$recovery_potential <- model(foss_sub$rel_age)
+  foss_sub
+})
+ex_recov <- lapply(1:3, function(i) {
   # for each branch, sum the recovery potentials for all occurrences on that branch
-  branch_recovery <- foss_sub %>%
+  branch_recovery <- foss_sub[[i]] %>%
     group_by(edge) %>%
     summarise(recovery_potential = sum(recovery_potential, na.rm = TRUE)) %>%
     ungroup()
 })
 
-par(mfrow = c(3, 1), mar = c(0, 0, 0, 0))
+par(mfrow = c(3, 1))
 for (i in 1:3) {
   cols <- rep("black", nrow(tree_50$edge))
   cols[match(ex_recov[[i]]$edge, tree_50$edge[, 2])] <- viridisLite::magma(1000)[cut(log10(ex_recov[[i]]$recovery_potential), 1000)]
@@ -1335,23 +1340,43 @@ for (i in 1:3) {
                        horizontal = TRUE, smallplot = c(0.05, 0.4, 0.7, 0.8),
                        legend.lab = "Relative Recovery Potential", legend.line = -4)
   }
+  if (i == 3) {
+    axisPhylo()
+  }
 }
 dev.print(svg, filename = "./figures/Example_Recovery_Potentials_50tips.svg", width = 6, height = 8)
 dev.print(png, filename = "./figures/Example_Recovery_Potentials_50tips.png", width = 6, height = 8,
           units = "in", res = 300)
 
 ## resulting trees ####
-tree_sub <- tree_df %>%
-  filter(n_tip == 50, mu == 0.9, sim == 1, fossil_prop == 0.5) %>%
-  mutate(beta = fct_recode(as.factor(beta), `root-biased` = "root", `random` = "random", `recent-biased` = "recent"))
+set.seed(59245)
+tree_final <- lapply(1:3, function(i) {
+  branch_recovery <- ex_recov[[i]]
+  sampled_branches <- sample(branch_recovery$edge, 25,
+                             prob = branch_recovery$recovery_potential)
+  # return a fossil occurrence for each of those branches
+  f <- foss_sub[[i]] %>%
+    filter(edge %in% sampled_branches) %>%
+    group_by(edge) %>%
+    slice(1) %>%
+    ungroup() %>%
+    select(-rel_age, -recovery_potential) %>%
+    as.fossils()
+  sa_tree <- SAtree.from.fossils(tree_50, f)$tree
+  node.ages <- FossilSim:::n.ages(sa_tree)
+  origin <- max(node.ages) + sa_tree$root.edge
+  sa_tree <- FossilSim:::drop.unsampled(sa_tree, frac = (50 - 25) / 50, n = -1)
+  node.ages <- FossilSim:::n.ages(sa_tree)
+  sa_tree$root.edge <- origin - max(node.ages)
+  sa_tree <- SAtree(sa_tree, FALSE)
+  sa_tree$tip.label <- paste("t", 1:Ntip(sa_tree), sep = "")
+  sa_tree
+})
 
-par(mfrow = c(1, 3), mar = c(7.5, 0, 0, 0))
-for (i in seq_len(nrow(tree_sub))) {
-  plot.phylo(ladderize(tree_sub$tree[[i]], right = FALSE), show.tip.label = FALSE)
-  palaeoverse::axis_geo_phylo(side = 1, lab_size = 1.5, cex.axis = 1.5,
-                              lwd = 1.5, height = 0.1,
-                              skip = c("Oligocene", "Holocene"),
-                              title = tree_sub$beta[i])
+par(mfrow = c(1, 3))
+for (i in 1:3) {
+  plot.phylo(ladderize(tree_final[[i]], right = FALSE), show.tip.label = FALSE)
+  axisPhylo()
 }
 dev.print(svg, filename = "./figures/Example_Resulting_Trees_50tips.svg", width = 9, height = 4.5)
 dev.print(png, filename = "./figures/Example_Resulting_Trees_50tips.png", width = 9, height = 4.5,
