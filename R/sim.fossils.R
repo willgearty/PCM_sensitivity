@@ -1,16 +1,12 @@
 # Written by Will Gearty 2/10/2023
-# Last updated 6/27/2025
+# Last updated 2/25/2026
 
 library(TreeSim)
 library(FossilSim)
-library(geiger)
 library(dplyr)
 
 # This uses modified source code from FossilSim to pick the
 # correct proportion of fossils and the correct number of extant tips.
-# The chance of sampling an extinct species is dependent on its branch length.
-# Non-uniform fossil sampling is imposed by temporarily rescaling the tree
-# (options can be found in geiger::rescale).
 # n: number of total taxa in the final tree
 # prop_extinct: proportion of the final taxa that are extinct
 # numbsim: number of simulations
@@ -18,9 +14,11 @@ library(dplyr)
 # mu: death/extinction rate
 # complete: if TRUE, unsampled ancestors are included in the final tree
 #           (meaning it will have more than n tips)
-# model: a transformation model passed to geiger::rescale used only for fossil sampling
+# model: a function that takes a relative age (between 0 and 1) and returns a
+#        recovery potential (a non-negative number)
 #        (for temporal sampling biases/trends)
-# ...: other arguments passed to geiger::rescale (e.g., `a` for the EB `model`)
+# ...: other arguments passed to the model function
+# progress: if TRUE, a progress bar is shown during the sampling process
 sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
                               complete = FALSE, model = function(t) 1, progress = TRUE, ...)
 {
@@ -81,6 +79,7 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
 # tree: a phylo object representing the tree to sample from
 # model: a function that takes a relative age (between 0 and 1) and returns a
 #        recovery potential (a non-negative number)
+# ...: other arguments passed to the model function
 sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
   while (TRUE) {
     # simulate a large number of fossil occurrences with sim.fossils.poisson
@@ -94,7 +93,7 @@ sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
   # assign each fossil a "recovery potential"
   max_age <- max(FossilSim:::n.ages(tree))
   foss_sub$rel_age <- (max_age - foss_sub$hmin) / max_age
-  foss_sub$recovery_potential <- model(foss_sub$rel_age)
+  foss_sub$recovery_potential <- model(foss_sub$rel_age, ...)
   # for each branch, sum the recovery potentials for all occurrences on that branch
   branch_recovery <- foss_sub %>%
     group_by(edge) %>%

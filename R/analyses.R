@@ -1,9 +1,10 @@
 # Written by Will Gearty, Bethany Allen, Pedro Godoy, and Alfio Alessandro Chiarenza
+# Last updated 2/25/26
 
 # Load libraries
 #devtools::install_github("willgearty/pcmtools")
-library(ape); library(phytools); library(geiger); library(TreeSim)
-library(FossilSim); library(mvMORPH); library(pbapply); library(dplyr)
+library(ape); library(phytools); library(TreeSim); library(FossilSim)
+library(mvMORPH); library(pbapply); library(dplyr)
 library(tibble); library(tidyr); library(ggplot2); library(pcmtools)
 library(deeptime); library(future); library(future.apply)
 library(forcats); library(ggh4x); library(data.table)

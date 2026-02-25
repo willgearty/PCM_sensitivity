@@ -1,5 +1,5 @@
 This repository contains the required R code to produce all of the analyses and plots in:  
-‘The Impact of Tip Age Distribution on Reconstructing Trait Evolution Using Phylogenetic Comparative Methods’  
+‘Quantifying the Impact of Fossil Age on Reconstructing Trait Evolution Using Phylogenetic Comparative Methods’  
 William Gearty, Bethany J. Allen, Pedro L. Godoy, and Alfio Alessandro Chiarenza
 
 ## Before running the code
@@ -12,12 +12,13 @@ Run `R/analyses.R` to perform all analyses and produce all plots from the manusc
 The following packages can all be installed from CRAN:
 
 ape  
+data.table  
 deeptime  
 dplyr  
 forcats  
 FossilSim  
 future  
-geiger  
+future.apply  
 ggh4x  
 ggplot2  
 mvMORPH  
@@ -38,5 +39,5 @@ devtools::install_github("willgearty/pcmtools")
 ```
 
   
-All other packages can be installed from CRAN. These scripts have been tested using R version 4.4.0 - 
-Copyright (C) 2024 The R Foundation for Statistical Computing.
+These scripts have been tested using R version 4.5.2 - 
+Copyright (C) 2025 The R Foundation for Statistical Computing.
