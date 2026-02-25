@@ -73,40 +73,6 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
   return(trees)
 }
 
-# Sample fossil species across a phylogeny
-# The sampling process can be biased temporally by specifying a `model` that is
-# used to temporarily transform the tree using geiger::rescale.
-# Note that a given extinct species can only be sampled at most once.
-# n: number of fossil tips to sample
-# tree: non-ultrametric phylogeny
-# model: a transformation model passed to geiger::rescale used only for fossil sampling
-#        (for temporal sampling biases/trends)
-# ...: other arguments passed to geiger::rescale (e.g., `a` for the EB `model`)
-sim.fossils <- function(n, tree = NULL, model = NULL, ...) {
-  # scale tree however the user wants
-  scaled_tree <- tree
-  if (!is.null(model)) {
-    scaled_tree <- rescale(scaled_tree, model, ...)
-  }
-  # get branch lengths of rescaled tree
-  rescaled_taxonomy <- sim.taxonomy(scaled_tree, beta = 1)
-  # sample species using the rescaled branch lengths
-  sps <- sample.int(n = nrow(rescaled_taxonomy), size = n,
-                        prob = sapply(rescaled_taxonomy$start - rescaled_taxonomy$end,
-                                      function(x) max(0.00001, x))) # each branch always has a small chance
-  # sample the fossils from the sampled species
-  fdf <- fossils()
-  taxonomy <- sim.taxonomy(tree, beta = 1)
-  for (sp in sps){
-    start <- max(taxonomy$start[which(taxonomy$sp == sp)])
-    end <- min(taxonomy$end[which(taxonomy$sp == sp)])
-    h <- runif(1, min = end, max = start)
-    fdf <- rbind(fdf, data.frame(sp = sp, edge = sp, hmin = h, hmax = h, stringsAsFactors = F))
-  }
-  fdf <- fossils(fdf)
-  return(fdf)
-}
-
 # TODO: document args
 # determine a sampling "model" (i.e., a temporal bias for fossil sampling)
 sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
