@@ -73,8 +73,14 @@ sim.fbd.taxa.prop <- function(n, prop_extinct, numbsim, lambda, mu,
   return(trees)
 }
 
-# TODO: document args
-# determine a sampling "model" (i.e., a temporal bias for fossil sampling)
+# This function simulates fossil occurrences along the extinct branches of a
+# tree using sim.fossils.poisson, and then samples from the branches based on
+# aggregate weighting under a time-varying model. This allows the user to impose
+# a temporal bias for fossil sampling.
+# n: number of extinct tips to sample
+# tree: a phylo object representing the tree to sample from
+# model: a function that takes a relative age (between 0 and 1) and returns a
+#        recovery potential (a non-negative number)
 sim.fossil.tips <- function(n, tree, model = function(t) 1, ...) {
   while (TRUE) {
     # simulate a large number of fossil occurrences with sim.fossils.poisson
